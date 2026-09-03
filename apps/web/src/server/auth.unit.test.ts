@@ -29,6 +29,9 @@ const mocks = vi.hoisted(() => {
       },
     }),
   );
+  const userUpdate = vi.fn();
+  const inviteFindMany = vi.fn();
+  const createTeam = vi.fn();
 
   return {
     env,
@@ -37,6 +40,9 @@ const mocks = vi.hoisted(() => {
     userFindUnique,
     userFindFirst,
     inviteFindFirst,
+    inviteFindMany,
+    userUpdate,
+    createTeam,
     transactionUserFindFirst,
     transactionInviteFindFirst,
     transactionUserCreate,
@@ -73,11 +79,19 @@ vi.mock("~/server/db", () => ({
     user: {
       findUnique: mocks.userFindUnique,
       findFirst: mocks.userFindFirst,
+      update: mocks.userUpdate,
     },
     teamInvite: {
       findFirst: mocks.inviteFindFirst,
+      findMany: mocks.inviteFindMany,
     },
     $transaction: mocks.transaction,
+  },
+}));
+
+vi.mock("~/server/service/team-service", () => ({
+  TeamService: {
+    createTeam: mocks.createTeam,
   },
 }));
 
@@ -117,6 +131,9 @@ describe("authOptions", () => {
     mocks.userFindUnique.mockResolvedValue(null);
     mocks.userFindFirst.mockResolvedValue(null);
     mocks.inviteFindFirst.mockResolvedValue(null);
+    mocks.inviteFindMany.mockResolvedValue([]);
+    mocks.userUpdate.mockResolvedValue(undefined);
+    mocks.createTeam.mockResolvedValue(undefined);
     mocks.transactionUserFindFirst.mockResolvedValue(null);
     mocks.transactionInviteFindFirst.mockResolvedValue(null);
     mocks.transactionUserCreate.mockResolvedValue({ ...newUser, id: 1 });
@@ -327,6 +344,47 @@ describe("authOptions", () => {
 
       expect(mocks.transaction).toHaveBeenCalledOnce();
       expect(mocks.transactionUserCreate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createUser event", () => {
+    const createUserEvent = authOptions.events?.createUser;
+
+    if (!createUserEvent) {
+      throw new Error("Expected createUser event to be configured");
+    }
+
+    it("activates cloud users immediately and creates a default team", async () => {
+      mocks.env.NEXT_PUBLIC_IS_CLOUD = true;
+
+      await createUserEvent({ user: { ...newUser, id: 1 } });
+
+      expect(mocks.userUpdate).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { isBetaUser: true, isWaitlisted: false },
+      });
+      expect(mocks.createTeam).toHaveBeenCalledWith(1, "New User Team");
+    });
+
+    it("skips default team creation when the user has pending invites", async () => {
+      mocks.env.NEXT_PUBLIC_IS_CLOUD = true;
+      mocks.inviteFindMany.mockResolvedValue([{ id: "invite_1" }]);
+
+      await createUserEvent({ user: { ...newUser, id: 1 } });
+
+      expect(mocks.createTeam).not.toHaveBeenCalled();
+    });
+
+    it("marks self-hosted users as beta without waitlisting", async () => {
+      mocks.env.NEXT_PUBLIC_IS_CLOUD = false;
+
+      await createUserEvent({ user: { ...newUser, id: 1 } });
+
+      expect(mocks.userUpdate).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { isBetaUser: true },
+      });
+      expect(mocks.createTeam).not.toHaveBeenCalled();
     });
   });
 });

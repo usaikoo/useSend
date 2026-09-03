@@ -44,7 +44,7 @@ services:
     command: -c 'mkdir -p /data/unsend && minio server /data --console-address ":9001" --address ":9002"'
 
   usesend:
-    image: usesend/usesend:latest
+    image: saikodev/rioreply:latest
     container_name: usesend
     restart: always
     ports:
@@ -67,6 +67,7 @@ services:
       - REDIS_URL=${REDIS_URL:?err}
       - REDIS_KEY_PREFIX=${REDIS_KEY_PREFIX:-}
       - NEXT_PUBLIC_IS_CLOUD=${NEXT_PUBLIC_IS_CLOUD:-true}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
       - API_RATE_LIMIT=${API_RATE_LIMIT:-1}
       - SMTP_HOST=${SMTP_HOST:-smtp.usesend.com}
       - SMTP_USER=${SMTP_USER:-usesend}

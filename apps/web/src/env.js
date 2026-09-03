@@ -86,7 +86,7 @@ export const env = createEnv({
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_IS_CLOUD: z
       .string()
-      .default("false")
+      .default("true")
       .transform((str) => str === "true"),
     NEXT_PUBLIC_APP_VERSION: z.string().optional(),
     NEXT_PUBLIC_GIT_SHA: z.string().optional(),

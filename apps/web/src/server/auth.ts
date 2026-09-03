@@ -14,6 +14,7 @@ import { Provider } from "next-auth/providers/index";
 import { sendSignUpEmail } from "~/server/mailer";
 import { env } from "~/env";
 import { db } from "~/server/db";
+import { TeamService } from "~/server/service/team-service";
 
 const GITHUB_OAUTH_ISSUER = "https://github.com/login/oauth";
 
@@ -250,31 +251,31 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     createUser: async ({ user }) => {
-      let invitesAvailable = false;
-
-      if (user.email) {
-        const invites = await db.teamInvite.findMany({
-          where: { email: user.email },
-        });
-
-        invitesAvailable = invites.length > 0;
-      }
-
-      if (
-        !env.NEXT_PUBLIC_IS_CLOUD ||
-        env.NODE_ENV === "development" ||
-        invitesAvailable
-      ) {
+      if (env.NEXT_PUBLIC_IS_CLOUD) {
         await db.user.update({
           where: { id: user.id },
-          data: { isBetaUser: true },
+          data: { isBetaUser: true, isWaitlisted: false },
         });
-      } else {
-        await db.user.update({
-          where: { id: user.id },
-          data: { isBetaUser: true, isWaitlisted: true },
-        });
+
+        const invites = user.email
+          ? await db.teamInvite.findMany({ where: { email: user.email } })
+          : [];
+
+        if (invites.length === 0) {
+          const baseName =
+            user.name?.trim() ||
+            user.email?.split("@")[0]?.trim() ||
+            "My";
+          await TeamService.createTeam(user.id, `${baseName} Team`);
+        }
+
+        return;
       }
+
+      await db.user.update({
+        where: { id: user.id },
+        data: { isBetaUser: true },
+      });
     },
   },
   providers: getProviders(),
