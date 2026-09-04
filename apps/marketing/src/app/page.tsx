@@ -9,10 +9,10 @@ import { FeatureCardPlain } from "~/components/FeatureCardPlain";
 import { PricingCalculator } from "~/components/PricingCalculator";
 import CodeExample from "~/components/CodeExample";
 import { Avatar, AvatarFallback, AvatarImage } from "@usesend/ui/src/avatar";
+import { APP_SIGNUP_URL } from "~/lib/site-config";
 
 const REPO = "usesend/usesend";
 const REPO_URL = `https://github.com/${REPO}`;
-const APP_URL = "https://app.usesend.com";
 
 export default function Page() {
   return (
@@ -48,9 +48,7 @@ function Hero() {
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button size="lg" className="px-6">
-            <a href={APP_URL} target="_blank" rel="noopener noreferrer">
-              Get started
-            </a>
+            <a href={APP_SIGNUP_URL}>Get started</a>
           </Button>
 
           <GitHubStarsButton />
@@ -423,13 +421,7 @@ function PricingCard({ title, price, note, perks }: PricingCardProps) {
           </ul>
           <div className="mt-auto pt-6">
             <Button className="">
-              <a
-                href="https://app.usesend.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Get started
-              </a>
+              <a href={APP_SIGNUP_URL}>Get started</a>
             </Button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { Button } from "@usesend/ui/src/button";
 import { CodeBlock } from "@usesend/ui/src/code-block";
 import { CodeBlockWithCopy } from "@usesend/ui/src/code-block-with-copy";
 import { LangToggle } from "./CodeLangToggle";
+import { API_EMAILS_URL } from "~/lib/site-config";
 
 const TS_CODE = `import { UseSend } from "usesend-js";
 
@@ -39,7 +40,7 @@ import (
 )
 
 func main() {
-    url := "https://app.usesend.com/api/v1/emails"
+    url := "${API_EMAILS_URL}"
 
     payload := strings.NewReader("{\n     \\\"to\\\": \\\"hello@acme.com\\\",\n     \\\"from\\\": \\\"hello@company.com\\\",\n     \\\"subject\\\": \\\"useSend email\\\",\n     \\\"html\\\": \\\"<p>useSend is the best open source product to send emails</p>\\\",\n     \\\"text\\\": \\\"useSend is the best open source product to send emails\\\"\n    }")
 
@@ -57,7 +58,7 @@ func main() {
 
 const PHP_CODE = `<?php
 
-$ch = curl_init('https://app.usesend.com/api/v1/emails');
+$ch = curl_init('${API_EMAILS_URL}');
 curl_setopt_array($ch, [
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_HTTPHEADER => [

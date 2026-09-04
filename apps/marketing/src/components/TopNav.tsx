@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@usesend/ui/src/button";
+import { APP_SIGNUP_URL } from "~/lib/site-config";
 
 const REPO = "usesend/usesend";
 const REPO_URL = `https://github.com/${REPO}`;
-const APP_URL = "https://app.usesend.com";
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
@@ -46,9 +46,7 @@ export function TopNav() {
             GitHub
           </a>
           <Button size="sm" className="ml-2">
-            <a href={APP_URL} target="_blank" rel="noopener noreferrer">
-              Get started
-            </a>
+            <a href={APP_SIGNUP_URL}>Get started</a>
           </Button>
         </nav>
 
@@ -95,7 +93,7 @@ export function TopNav() {
             </a>
             <div className="pt-2">
               <Button className="w-full">
-                <a href={APP_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+                <a href={APP_SIGNUP_URL} onClick={() => setOpen(false)}>
                   Get started
                 </a>
               </Button>

@@ -5,6 +5,7 @@ import { JetBrains_Mono } from "next/font/google";
 import type { Metadata } from "next";
 import { ThemeProvider } from "@usesend/ui";
 import Script from "next/script";
+import { SITE_URL } from "~/lib/site-config";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,11 +21,11 @@ export const metadata: Metadata = {
   title: "useSend – Open source email platform",
   description: "Pay only for what you send, not for storing contacts",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
-  metadataBase: new URL("https://usesend.com"),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "useSend – Open source email platform",
     description: "Pay only for what you send, not for storing contacts",
-    url: "https://usesend.com",
+    url: SITE_URL,
     siteName: "useSend",
     images: [
       {
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   alternates: {
-    canonical: "https://usesend.com",
+    canonical: SITE_URL,
   },
 };
 
