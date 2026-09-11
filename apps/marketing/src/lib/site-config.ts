@@ -5,7 +5,7 @@ export const SITE_URL = trimTrailingSlash(
 );
 
 export const APP_URL = trimTrailingSlash(
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://rioreply.app",
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://app.rioreply.app",
 );
 
 export const APP_SIGNUP_URL = `${APP_URL}/signup`;
