@@ -1,14 +1,23 @@
 import { Button } from "@usesend/ui/src/button";
 import Spinner from "@usesend/ui/src/spinner";
+import { toast } from "@usesend/ui/src/toaster";
 import { api } from "~/trpc/react";
 
 export const UpgradeButton = () => {
   const checkoutMutation = api.billing.createCheckoutSession.useMutation();
 
   const onClick = async () => {
-    const url = await checkoutMutation.mutateAsync();
-    if (url) {
-      window.location.href = url;
+    try {
+      const url = await checkoutMutation.mutateAsync();
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to start checkout. Check Stripe configuration.",
+      );
     }
   };
 
