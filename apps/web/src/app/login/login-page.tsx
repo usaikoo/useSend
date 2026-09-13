@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { IframeBreakout } from "~/components/iframe-breakout";
 import { ClientSafeProvider, LiteralUnion, signIn } from "next-auth/react";
 import {
   Form,
@@ -123,9 +124,11 @@ export default function LoginPage({
     const email = emailForm.getValues().email;
     console.log("email", email);
 
-    const finalCallbackUrl = inviteId
-      ? `/join-team?inviteId=${inviteId}`
-      : `${callbackUrl}/dashboard`;
+    const finalCallbackUrl = callbackUrlParam?.startsWith("/")
+      ? `${callbackUrl}${callbackUrlParam}`
+      : inviteId
+        ? `/join-team?inviteId=${inviteId}`
+        : `${callbackUrl}/dashboard`;
     window.location.href = `/api/auth/callback/email?email=${encodeURIComponent(
       email.toLowerCase(),
     )}&token=${values.otp.toLowerCase()}&callbackUrl=${encodeURIComponent(finalCallbackUrl)}`;
@@ -140,17 +143,28 @@ export default function LoginPage({
 
   const searchParams = useNextSearchParams();
   const inviteId = searchParams.get("inviteId");
+  const callbackUrlParam = searchParams.get("callbackUrl");
   const authErrorMessage = getAuthErrorMessage(searchParams.get("error"));
+
+  const getCallbackUrl = () => {
+    if (callbackUrlParam?.startsWith("/")) {
+      return callbackUrlParam;
+    }
+
+    if (inviteId) {
+      return `/join-team?inviteId=${inviteId}`;
+    }
+
+    return "/dashboard";
+  };
 
   const handleSubmit = (provider: LiteralUnion<BuiltInProviderType>) => {
     setSubmittedProvider(provider);
-    const callbackUrl = inviteId
-      ? `/join-team?inviteId=${inviteId}`
-      : "/dashboard";
-    signIn(provider, { callbackUrl });
+    signIn(provider, { callbackUrl: getCallbackUrl() });
   };
 
   return (
+    <IframeBreakout>
     <main className="h-screen flex justify-center items-center">
       <div className="flex flex-col gap-6">
         <Image
@@ -316,5 +330,6 @@ export default function LoginPage({
         </div>
       </div>
     </main>
+    </IframeBreakout>
   );
 }
