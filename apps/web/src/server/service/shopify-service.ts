@@ -11,6 +11,7 @@ import {
   verifyOAuthHmac,
 } from "~/server/shopify/oauth";
 import { db } from "~/server/db";
+import { ShopifySyncService } from "~/server/service/shopify-sync-service";
 
 export class ShopifyService {
   static isConfigured() {
@@ -100,6 +101,8 @@ export class ShopifyService {
       },
     });
 
+    ShopifySyncService.scheduleSync(store.id);
+
     return {
       teamId: oauthState.teamId,
       store,
@@ -121,6 +124,11 @@ export class ShopifyService {
         timezone: true,
         scope: true,
         status: true,
+        syncStatus: true,
+        syncError: true,
+        productCount: true,
+        customerCount: true,
+        orderCount: true,
         installedAt: true,
         lastSyncAt: true,
         createdAt: true,

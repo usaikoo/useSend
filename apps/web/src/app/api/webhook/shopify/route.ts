@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getShopifyConfig, verifyWebhookHmac } from "~/server/shopify/oauth";
 import { ShopifyService } from "~/server/service/shopify-service";
+import { ShopifySyncService } from "~/server/service/shopify-sync-service";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -22,7 +23,11 @@ export async function POST(req: Request) {
 
     if (topic === "app/uninstalled") {
       await ShopifyService.markUninstalled(shopDomain);
+      return new NextResponse("OK", { status: 200 });
     }
+
+    const payload = JSON.parse(body) as Record<string, unknown>;
+    await ShopifySyncService.handleWebhookTopic(shopDomain, topic, payload);
 
     return new NextResponse("OK", { status: 200 });
   } catch (error) {

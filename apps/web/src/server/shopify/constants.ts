@@ -10,3 +10,16 @@ export const SHOPIFY_DEFAULT_SCOPES = [
 export const SHOPIFY_OAUTH_STATE_TTL_SECONDS = 600;
 
 export const SHOPIFY_OAUTH_STATE_PREFIX = "shopify:oauth:";
+
+export const SHOPIFY_PAGE_LIMIT = 250;
+
+export const SHOPIFY_WEBHOOK_TOPICS = [
+  "app/uninstalled",
+  "products/create",
+  "products/update",
+  "products/delete",
+  "customers/create",
+  "customers/update",
+  "orders/create",
+  "orders/updated",
+] as const;

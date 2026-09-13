@@ -134,26 +134,112 @@ enum ShopifyStoreStatus {
   DISCONNECTED
 }
 
+enum ShopifySyncStatus {
+  IDLE
+  SYNCING
+  FAILED
+}
+
 model ShopifyStore {
-  id            String             @id @default(cuid())
+  id            String              @id @default(cuid())
   teamId        Int
-  shopDomain    String             @unique
+  shopDomain    String              @unique
   accessToken   String
   scope         String?
-  status        ShopifyStoreStatus @default(ACTIVE)
+  status        ShopifyStoreStatus  @default(ACTIVE)
+  syncStatus    ShopifySyncStatus   @default(IDLE)
+  syncError     String?
   shopName      String?
   shopEmail     String?
   currency      String?
   timezone      String?
-  installedAt   DateTime           @default(now())
+  productCount  Int                 @default(0)
+  customerCount Int                 @default(0)
+  orderCount    Int                 @default(0)
+  installedAt   DateTime            @default(now())
   uninstalledAt DateTime?
   lastSyncAt    DateTime?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  team          Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  team          Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  products      ShopifyProduct[]
+  customers     ShopifyCustomer[]
+  orders        ShopifyOrder[]
 
   @@unique([teamId, shopDomain])
   @@index([teamId])
+}
+
+model ShopifyProduct {
+  id               String       @id @default(cuid())
+  storeId          String
+  shopifyId        String
+  title            String
+  handle           String?
+  description      String?
+  vendor           String?
+  productType      String?
+  status           String?
+  tags             String?
+  priceMin         Float?
+  priceMax         Float?
+  compareAtPrice   Float?
+  inventoryTotal   Int          @default(0)
+  imageUrl         String?
+  productUrl       String?
+  shopifyUpdatedAt DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  store            ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, shopifyId])
+  @@index([storeId])
+}
+
+model ShopifyCustomer {
+  id                      String         @id @default(cuid())
+  storeId                 String
+  shopifyId               String
+  email                   String?
+  firstName               String?
+  lastName                String?
+  phone                   String?
+  ordersCount             Int            @default(0)
+  totalSpent              Float?
+  emailMarketingConsent   Boolean        @default(false)
+  lastOrderAt             DateTime?
+  shopifyCreatedAt        DateTime?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  store                   ShopifyStore   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders                  ShopifyOrder[]
+
+  @@unique([storeId, shopifyId])
+  @@index([storeId])
+  @@index([storeId, email])
+}
+
+model ShopifyOrder {
+  id                String           @id @default(cuid())
+  storeId           String
+  shopifyId         String
+  customerId        String?
+  orderNumber       String?
+  email             String?
+  financialStatus   String?
+  fulfillmentStatus String?
+  totalPrice        Float?
+  currency          String?
+  lineItems         Json?
+  shopifyCreatedAt  DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  store             ShopifyStore     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer          ShopifyCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([storeId, shopifyId])
+  @@index([storeId])
+  @@index([customerId])
 }
 
 model TeamInvite {

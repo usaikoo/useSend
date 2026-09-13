@@ -5,6 +5,7 @@ import {
   teamProcedure,
 } from "~/server/api/trpc";
 import { ShopifyService } from "~/server/service/shopify-service";
+import { ShopifySyncService } from "~/server/service/shopify-sync-service";
 import { TRPCError } from "@trpc/server";
 
 export const shopifyRouter = createTRPCRouter({
@@ -35,5 +36,9 @@ export const shopifyRouter = createTRPCRouter({
 
   disconnect: teamAdminProcedure.mutation(async ({ ctx }) => {
     return ShopifyService.disconnectStore(ctx.team.id);
+  }),
+
+  syncNow: teamAdminProcedure.mutation(async ({ ctx }) => {
+    return ShopifySyncService.syncAllForTeam(ctx.team.id);
   }),
 });

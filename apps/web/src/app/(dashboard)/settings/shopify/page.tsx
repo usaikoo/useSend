@@ -18,21 +18,27 @@ export default function ShopifySettingsPage() {
 
   const apiUtils = api.useUtils();
   const { data: config } = api.shopify.isConfigured.useQuery();
-  const { data: store, isLoading } = api.shopify.getStore.useQuery();
+  const { data: store, isLoading } = api.shopify.getStore.useQuery(undefined, {
+    refetchInterval: (query) =>
+      query.state.data?.syncStatus === "SYNCING" ? 3000 : false,
+  });
   const getInstallUrl = api.shopify.getInstallUrl.useMutation();
   const disconnect = api.shopify.disconnect.useMutation();
+  const syncNow = api.shopify.syncNow.useMutation();
 
   useEffect(() => {
     const connected = searchParams.get("connected");
     const error = searchParams.get("error");
 
     if (connected === "1") {
-      setMessage("Shopify store connected successfully.");
+      setMessage("Shopify store connected successfully. Sync started.");
       void apiUtils.shopify.getStore.invalidate();
     } else if (error === "oauth_failed") {
       setMessage("Failed to connect Shopify store. Please try again.");
     } else if (error === "missing_params") {
       setMessage("Shopify returned an incomplete authorization response.");
+    } else if (error === "not_configured") {
+      setMessage("Shopify integration is not configured on the server.");
     }
   }, [searchParams, apiUtils.shopify.getStore]);
 
@@ -61,6 +67,20 @@ export default function ShopifySettingsPage() {
     }
   };
 
+  const onSyncNow = async () => {
+    setMessage(null);
+
+    try {
+      await syncNow.mutateAsync();
+      await apiUtils.shopify.getStore.invalidate();
+      setMessage("Shopify data synced successfully.");
+    } catch (error) {
+      console.error("Failed to sync Shopify store:", error);
+      setMessage("Shopify sync failed. Check server logs for details.");
+      await apiUtils.shopify.getStore.invalidate();
+    }
+  };
+
   if (!currentIsAdmin) {
     return null;
   }
@@ -72,6 +92,8 @@ export default function ShopifySettingsPage() {
       </div>
     );
   }
+
+  const isSyncing = store?.syncStatus === "SYNCING";
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -110,6 +132,32 @@ export default function ShopifySettingsPage() {
                   <span className="text-sm font-medium">{store.shopEmail}</span>
                 </div>
               ) : null}
+              <div className="flex justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Products</span>
+                <span className="text-sm font-medium">{store.productCount}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Customers</span>
+                <span className="text-sm font-medium">{store.customerCount}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Orders</span>
+                <span className="text-sm font-medium">{store.orderCount}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Sync status</span>
+                <span className="text-sm font-medium">
+                  {isSyncing ? "Syncing..." : store.syncStatus.toLowerCase()}
+                </span>
+              </div>
+              {store.syncError ? (
+                <div className="flex justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">Last error</span>
+                  <span className="text-sm font-medium text-destructive">
+                    {store.syncError}
+                  </span>
+                </div>
+              ) : null}
               {store.lastSyncAt ? (
                 <div className="flex justify-between gap-4">
                   <span className="text-sm text-muted-foreground">Last sync</span>
@@ -120,13 +168,25 @@ export default function ShopifySettingsPage() {
               ) : null}
             </div>
 
-            <Button
-              variant="outline"
-              onClick={onDisconnect}
-              disabled={disconnect.isPending}
-            >
-              {disconnect.isPending ? <Spinner className="w-4 h-4" /> : "Disconnect"}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={onSyncNow}
+                disabled={isSyncing || syncNow.isPending}
+              >
+                {isSyncing || syncNow.isPending ? (
+                  <Spinner className="w-4 h-4" />
+                ) : (
+                  "Sync now"
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onDisconnect}
+                disabled={disconnect.isPending || isSyncing}
+              >
+                {disconnect.isPending ? <Spinner className="w-4 h-4" /> : "Disconnect"}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="mt-6 space-y-4">
