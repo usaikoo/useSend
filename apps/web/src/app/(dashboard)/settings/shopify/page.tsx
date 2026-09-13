@@ -138,10 +138,24 @@ export default function ShopifySettingsPage() {
         </p>
 
         {customerDataPending ? (
-          <p className="text-sm mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-            Customer and order sync is paused until Shopify approves protected
-            customer data access for this app. Products sync normally.
-          </p>
+          <div className="text-sm mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 space-y-2">
+            <p>
+              Customer and order sync is paused until Shopify approves protected
+              customer data access for this app. Products sync normally.
+            </p>
+            <p>
+              Submit the protected customer data request in your Shopify Partner
+              Dashboard. Privacy policy:{" "}
+              <a
+                href="https://rioreply.app/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                rioreply.app/privacy
+              </a>
+            </p>
+          </div>
         ) : null}
 
         {message ? (

@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { TopNav } from "~/components/TopNav";
+import { APP_URL, SITE_URL } from "~/lib/site-config";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy – useSend",
-  description: "Simple privacy policy for the useSend marketing site.",
+  title: "Privacy Policy – RioReply",
+  description:
+    "How RioReply collects, uses, and protects data for merchants and their customers.",
 };
+
+const CONTACT_EMAIL = "privacy@rioreply.app";
+const LAST_UPDATED = "September 13, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -15,181 +20,290 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-muted-foreground mb-8">
-          This Privacy Policy explains how we collect, use, and share
-          information when you visit or interact with the useSend marketing
-          website at usesend.com. It also summarizes the limited information we
-          process when you sign up for our product and receive transactional or
-          occasional marketing emails.
+          This Privacy Policy explains how RioReply (&quot;RioReply&quot;,
+          &quot;we&quot;, &quot;us&quot;) collects, uses, stores, and shares
+          information when you visit {SITE_URL}, use our application at{" "}
+          {APP_URL}, or connect a Shopify store to RioReply.
         </p>
 
         <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">Who We Are</h2>
+          <h2 className="text-xl font-medium">Who we are</h2>
           <p className="text-muted-foreground">
-            useSend ("we", "us") operates the marketing website at
-            <span className="mx-1 font-mono">usesend.com</span>. The marketing
-            site is hosted on Vercel. Our application is hosted on Railway. We
-            are the controller of the information described in this policy for
-            the marketing site. If you have questions about this policy or your
-            data, contact us at
+            RioReply is an AI marketing autopilot for Shopify merchants. We help
+            merchants analyze store and customer behavior to send relevant,
+            personalized marketing emails. For privacy questions or requests,
+            contact us at{" "}
             <a
-              href="mailto:hey@usesend.com"
-              className="ml-1 underline decoration-dotted"
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="underline decoration-dotted"
             >
-              hey@usesend.com
+              {CONTACT_EMAIL}
             </a>
             .
           </p>
         </section>
 
         <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">What We Collect</h2>
+          <h2 className="text-xl font-medium">Who this policy applies to</h2>
           <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
             <li>
-              <span className="text-foreground">
-                Usage and device data (marketing site):
-              </span>{" "}
-              We use Simple Analytics to understand overall traffic and usage
-              patterns (e.g., pages visited, referrers, device type). Simple
-              Analytics is a privacy‑friendly analytics provider and does not
-              use cookies for tracking. Data is aggregated and not used to
-              identify you.
+              <span className="text-foreground">Merchants</span> who create a
+              RioReply account or connect a Shopify store.
             </li>
             <li>
-              <span className="text-foreground">Server and security logs:</span>{" "}
-              Our hosting providers (Vercel for the marketing site; Railway for
-              the app) may process IP addresses and basic request metadata
-              transiently for security, reliability, and debugging.
+              <span className="text-foreground">Store visitors and customers</span>{" "}
+              of merchants who use RioReply tracking and marketing features.
             </li>
             <li>
-              <span className="text-foreground">
-                Account and email data (product):
-              </span>{" "}
-              If you sign up for useSend, we process your account information
-              and send transactional emails. If you opt in, we may also send
-              occasional marketing emails. You can unsubscribe at any time via
-              the link in those emails.
+              <span className="text-foreground">Website visitors</span> to{" "}
+              {SITE_URL}.
             </li>
           </ul>
         </section>
 
         <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">How We Use Information</h2>
+          <h2 className="text-xl font-medium">Information we collect</h2>
+
+          <h3 className="text-base font-medium pt-2">Merchant account data</h3>
           <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-            <li>Operate, secure, and maintain the marketing site and app.</li>
+            <li>Name, email address, and authentication details.</li>
+            <li>Team and billing information when applicable.</li>
+            <li>Email domain and sending configuration.</li>
+          </ul>
+
+          <h3 className="text-base font-medium pt-4">
+            Shopify store data (via Shopify APIs)
+          </h3>
+          <p className="text-muted-foreground">
+            When a merchant connects Shopify, RioReply accesses store data
+            authorized by the merchant during installation. This may include:
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
             <li>
-              Understand aggregated usage to improve performance and content.
+              <span className="text-foreground">Store information:</span> store
+              name, domain, currency, timezone, and contact email.
             </li>
             <li>
-              Deliver transactional emails related to your account or use.
+              <span className="text-foreground">Products:</span> titles,
+              descriptions, prices, inventory, images, tags, and URLs.
             </li>
-            <li>Send occasional marketing emails to subscribers who opt in.</li>
-            <li>Comply with legal obligations and enforce our terms.</li>
+            <li>
+              <span className="text-foreground">Customers:</span> name, email,
+              phone, order count, total spent, marketing consent status, and
+              purchase dates.
+            </li>
+            <li>
+              <span className="text-foreground">Orders:</span> order ID, line
+              items, totals, currency, status, and associated customer.
+            </li>
+          </ul>
+
+          <h3 className="text-base font-medium pt-4">
+            Storefront behavior data (tracking script)
+          </h3>
+          <p className="text-muted-foreground">
+            Merchants may install a RioReply tracking snippet on their Shopify
+            storefront. This captures behavioral events such as:
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+            <li>Page views, product views, and collection views.</li>
+            <li>Search queries.</li>
+            <li>Add to cart, checkout started, and purchase events.</li>
+            <li>
+              Anonymous visitor and session identifiers stored in first-party
+              cookies (<code className="text-xs">_rr_vid</code>,{" "}
+              <code className="text-xs">_rr_sid</code>).
+            </li>
+            <li>Page URL, referrer, and browser user agent.</li>
+          </ul>
+          <p className="text-muted-foreground">
+            Storefront tracking does not intentionally collect payment card
+            numbers or Shopify admin credentials.
+          </p>
+
+          <h3 className="text-base font-medium pt-4">Email engagement data</h3>
+          <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+            <li>Email delivery, open, click, bounce, and unsubscribe events.</li>
+            <li>Campaign and message metadata needed to measure performance.</li>
+          </ul>
+
+          <h3 className="text-base font-medium pt-4">Website analytics</h3>
+          <p className="text-muted-foreground">
+            Our marketing site may use privacy-friendly analytics to understand
+            aggregated traffic. We do not use this data to identify individual
+            visitors.
+          </p>
+        </section>
+
+        <section className="space-y-3 mb-8">
+          <h2 className="text-xl font-medium">How we use information</h2>
+          <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+            <li>Provide, operate, and improve RioReply.</li>
+            <li>
+              Synchronize Shopify store, product, customer, and order data for
+              the connected merchant.
+            </li>
+            <li>
+              Analyze customer behavior and purchase patterns to identify
+              marketing opportunities.
+            </li>
+            <li>
+              Generate and send personalized marketing emails on behalf of the
+              merchant, respecting consent and frequency limits.
+            </li>
+            <li>Measure campaign performance and revenue attribution.</li>
+            <li>Maintain security, prevent abuse, and comply with legal obligations.</li>
+          </ul>
+          <p className="text-muted-foreground">
+            We do not sell personal information. We do not use Shopify customer
+            data for advertising outside the merchant&apos;s own store
+            marketing.
+          </p>
+        </section>
+
+        <section className="space-y-3 mb-8">
+          <h2 className="text-xl font-medium">Legal bases (EEA/UK)</h2>
+          <p className="text-muted-foreground">
+            Where applicable, we process data based on: (1) contract — to
+            provide RioReply to merchants; (2) legitimate interests — to secure
+            our services and improve product functionality; (3) consent — for
+            marketing emails where required; and (4) legal obligation — where
+            required by law.
+          </p>
+          <p className="text-muted-foreground">
+            Merchants are responsible for obtaining any required consent from
+            their customers before sending marketing communications.
+          </p>
+        </section>
+
+        <section className="space-y-3 mb-8">
+          <h2 className="text-xl font-medium">Data sharing</h2>
+          <p className="text-muted-foreground">
+            We share information only with service providers that help us operate
+            RioReply, such as hosting, database, email delivery, and payment
+            processors. These providers process data on our instructions and
+            under appropriate agreements.
+          </p>
+          <p className="text-muted-foreground">
+            We may also disclose information if required by law or to protect
+            the rights, safety, and security of RioReply, merchants, and users.
+          </p>
+        </section>
+
+        <section className="space-y-3 mb-8">
+          <h2 className="text-xl font-medium">Data retention</h2>
+          <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+            <li>
+              Merchant account data is retained while the account is active and
+              as needed afterward for legal and billing purposes.
+            </li>
+            <li>
+              Shopify store data is retained while the store remains connected.
+            </li>
+            <li>
+              Storefront events are retained to support behavior analysis and
+              marketing decisions, typically up to 24 months unless deleted
+              earlier.
+            </li>
+            <li>
+              Email logs and engagement data are retained as needed for
+              deliverability, analytics, and compliance.
+            </li>
           </ul>
         </section>
 
         <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">Legal Bases</h2>
+          <h2 className="text-xl font-medium">App uninstall and data deletion</h2>
           <p className="text-muted-foreground">
-            Where applicable (e.g., in the EEA/UK), we rely on legitimate
-            interests to operate and secure our services and to measure
-            aggregated site usage, and on your consent for marketing emails. We
-            may rely on contract and legal obligation where relevant.
-          </p>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">Sharing and Processors</h2>
-          <p className="text-muted-foreground">
-            We share information with service providers who process data on our
-            behalf, including:
+            When a merchant uninstalls the RioReply Shopify app or disconnects
+            their store:
           </p>
           <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+            <li>We stop syncing new Shopify data immediately.</li>
             <li>
-              <span className="text-foreground">Hosting:</span> Vercel
-              (marketing site) and Railway (application) for serving content,
-              networking, and security.
+              We mark the store connection as uninstalled and revoke ongoing
+              API access.
             </li>
             <li>
-              <span className="text-foreground">Analytics:</span> Simple
-              Analytics for aggregated, privacy‑friendly usage metrics on the
-              marketing site.
+              Connected Shopify data (products, customers, orders, storefront
+              events) is scheduled for deletion within 30 days unless the
+              merchant requests earlier deletion or retention is required by law.
             </li>
             <li>
-              <span className="text-foreground">Email delivery:</span> We send
-              transactional emails and, for subscribers who opt in, occasional
-              marketing emails.
+              Merchants may request deletion at any time by emailing{" "}
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="underline decoration-dotted"
+              >
+                {CONTACT_EMAIL}
+              </a>
+              .
             </li>
           </ul>
+        </section>
+
+        <section className="space-y-3 mb-8">
+          <h2 className="text-xl font-medium">Security</h2>
           <p className="text-muted-foreground">
-            We do not sell your personal information. We may disclose
-            information if required by law or to protect our rights, users, or
-            the public.
+            We use industry-standard measures to protect data, including
+            encrypted connections (HTTPS/TLS), access controls, and secure
+            storage of credentials such as Shopify access tokens. No method of
+            transmission or storage is 100% secure, but we work to protect
+            information appropriately.
           </p>
         </section>
 
         <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">Retention</h2>
+          <h2 className="text-xl font-medium">International transfers</h2>
           <p className="text-muted-foreground">
-            We retain information only for as long as necessary to fulfill the
-            purposes described in this policy, including security, analytics,
-            and legal compliance. Aggregated analytics do not identify
-            individuals.
+            Data may be processed in countries other than where you live. Where
+            required, we implement appropriate safeguards for cross-border
+            transfers.
           </p>
         </section>
 
         <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">International Transfers</h2>
-          <p className="text-muted-foreground">
-            Our providers may process data in locations outside of your country
-            of residence. Where required, we implement appropriate safeguards
-            for cross‑border transfers.
-          </p>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">Your Rights</h2>
+          <h2 className="text-xl font-medium">Your rights</h2>
           <p className="text-muted-foreground">
             Depending on your location, you may have rights to access, correct,
-            delete, or export your information; to object to or restrict certain
-            processing; and to withdraw consent where processing is based on
-            consent. To exercise these rights, contact us using the details on
-            our website. We may ask you to verify your identity before acting on
-            a request.
-          </p>
-        </section>
-
-        <section className="space-y-3 mb-8">
-          <h2 className="text-xl font-medium">Contact</h2>
-          <p className="text-muted-foreground">
-            For privacy requests or questions, email us at
-            <a
-              href="mailto:hey@usesend.com"
-              className="ml-1 underline decoration-dotted"
-            >
-              hey@usesend.com
-            </a>
-            .
+            delete, or export personal information, or to object to or restrict
+            certain processing. Merchants can contact us to exercise these
+            rights. End customers of a merchant should contact the merchant
+            first; we will assist merchants with lawful requests.
           </p>
         </section>
 
         <section className="space-y-3 mb-8">
           <h2 className="text-xl font-medium">Children</h2>
           <p className="text-muted-foreground">
-            Our services are not directed to children, and we do not knowingly
+            RioReply is not directed to children, and we do not knowingly
             collect personal information from children.
           </p>
         </section>
 
-        <section className="space-y-3 mb-10">
+        <section className="space-y-3 mb-8">
           <h2 className="text-xl font-medium">Changes</h2>
           <p className="text-muted-foreground">
-            We may update this policy from time to time. The "Last updated" date
-            below reflects the most recent changes.
+            We may update this policy from time to time. Material changes will
+            be reflected by updating the date below.
+          </p>
+        </section>
+
+        <section className="space-y-3 mb-10">
+          <h2 className="text-xl font-medium">Contact</h2>
+          <p className="text-muted-foreground">
+            Privacy questions or data requests:{" "}
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="underline decoration-dotted"
+            >
+              {CONTACT_EMAIL}
+            </a>
           </p>
         </section>
 
         <p className="text-xs text-muted-foreground">
-          Last updated: {new Date().toLocaleDateString()}
+          Last updated: {LAST_UPDATED}
         </p>
       </div>
     </main>
