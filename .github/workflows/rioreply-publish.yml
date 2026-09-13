@@ -1,0 +1,40 @@
+name: Publish RioReply
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build and push saikodev/rioreply
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          GIT_SHA="$(git rev-parse HEAD)"
+          APP_VERSION="$(git name-rev --tags --name-only "$GIT_SHA" | head -n 1 | sed 's/\^0//')"
+
+          docker build \
+            -f docker/Dockerfile \
+            --progress=plain \
+            --build-arg APP_VERSION="$APP_VERSION" \
+            --build-arg GIT_SHA="$GIT_SHA" \
+            -t saikodev/rioreply:latest \
+            -t saikodev/rioreply:"$GIT_SHA" \
+            .
+
+          docker push saikodev/rioreply:latest
+          docker push saikodev/rioreply:"$GIT_SHA"
