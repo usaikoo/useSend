@@ -3,28 +3,16 @@
 import { useEffect, useState } from "react";
 import { Spinner } from "@usesend/ui/src/spinner";
 
-type BreakoutState = "loading" | "ready" | "blocked";
-
 export function IframeBreakout({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<BreakoutState>("loading");
+  const [isEmbedded, setIsEmbedded] = useState(true);
   const [href, setHref] = useState("");
 
   useEffect(() => {
     setHref(window.location.href);
-
-    if (window.self === window.top) {
-      setState("ready");
-      return;
-    }
-
-    try {
-      window.top!.location.href = window.location.href;
-    } catch {
-      setState("blocked");
-    }
+    setIsEmbedded(window.self !== window.top);
   }, []);
 
-  if (state === "loading") {
+  if (!href) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Spinner className="h-5 w-5" />
@@ -32,10 +20,10 @@ export function IframeBreakout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (state === "blocked") {
+  if (isEmbedded) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-sm text-muted-foreground max-w-sm">
+        <p className="max-w-sm text-sm text-muted-foreground">
           RioReply needs to open outside Shopify to sign in or connect your
           store.
         </p>
