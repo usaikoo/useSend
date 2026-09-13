@@ -140,6 +140,17 @@ enum ShopifySyncStatus {
   FAILED
 }
 
+enum ShopifyStorefrontEventType {
+  PAGE_VIEW
+  PRODUCT_VIEW
+  COLLECTION_VIEW
+  SEARCH
+  ADD_TO_CART
+  REMOVE_FROM_CART
+  CHECKOUT_STARTED
+  PURCHASE
+}
+
 model ShopifyStore {
   id            String              @id @default(cuid())
   teamId        Int
@@ -153,21 +164,54 @@ model ShopifyStore {
   shopEmail     String?
   currency      String?
   timezone      String?
-  productCount  Int                 @default(0)
-  customerCount Int                 @default(0)
-  orderCount    Int                 @default(0)
-  installedAt   DateTime            @default(now())
+  productCount       Int                 @default(0)
+  customerCount      Int                 @default(0)
+  orderCount         Int                 @default(0)
+  trackingPublicKey  String              @unique @default(cuid())
+  installedAt        DateTime            @default(now())
   uninstalledAt DateTime?
   lastSyncAt    DateTime?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   team          Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  products      ShopifyProduct[]
-  customers     ShopifyCustomer[]
-  orders        ShopifyOrder[]
+  products         ShopifyProduct[]
+  customers        ShopifyCustomer[]
+  orders           ShopifyOrder[]
+  storefrontEvents ShopifyStorefrontEvent[]
 
   @@unique([teamId, shopDomain])
   @@index([teamId])
+}
+
+model ShopifyStorefrontEvent {
+  id                String                     @id @default(cuid())
+  storeId           String
+  sessionId         String
+  visitorId         String?
+  eventType         ShopifyStorefrontEventType
+  url               String?
+  path              String?
+  referrer          String?
+  productId         String?
+  productHandle     String?
+  variantId         String?
+  collectionHandle  String?
+  searchQuery       String?
+  orderId           String?
+  value             Float?
+  currency          String?
+  quantity          Int?
+  metadata          Json?
+  userAgent         String?
+  occurredAt        DateTime                   @default(now())
+  createdAt         DateTime                   @default(now())
+  store             ShopifyStore               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, occurredAt(sort: Desc)])
+  @@index([storeId, eventType, occurredAt(sort: Desc)])
+  @@index([storeId, sessionId])
+  @@index([storeId, visitorId])
+  @@index([storeId, productId, occurredAt(sort: Desc)])
 }
 
 model ShopifyProduct {

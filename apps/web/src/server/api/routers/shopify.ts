@@ -6,11 +6,15 @@ import {
 } from "~/server/api/trpc";
 import { ShopifyService } from "~/server/service/shopify-service";
 import { ShopifySyncService } from "~/server/service/shopify-sync-service";
+import { ShopifyTrackingService } from "~/server/service/shopify-tracking-service";
 import { TRPCError } from "@trpc/server";
 
 export const shopifyRouter = createTRPCRouter({
   isConfigured: teamProcedure.query(() => {
-    return { configured: ShopifyService.isConfigured() };
+    return {
+      configured: ShopifyService.isConfigured(),
+      customerDataSyncEnabled: ShopifyService.isCustomerDataSyncEnabled(),
+    };
   }),
 
   getStore: teamProcedure.query(async ({ ctx }) => {
@@ -40,5 +44,17 @@ export const shopifyRouter = createTRPCRouter({
 
   syncNow: teamAdminProcedure.mutation(async ({ ctx }) => {
     return ShopifySyncService.syncAllForTeam(ctx.team.id);
+  }),
+
+  getTrackingSetup: teamProcedure.query(async ({ ctx }) => {
+    return ShopifyTrackingService.getTrackingSetupForTeam(ctx.team.id);
+  }),
+
+  getRecentStorefrontEvents: teamProcedure.query(async ({ ctx }) => {
+    return ShopifyTrackingService.getRecentEventsForTeam(ctx.team.id);
+  }),
+
+  getStorefrontEventStats: teamProcedure.query(async ({ ctx }) => {
+    return ShopifyTrackingService.getEventStatsForTeam(ctx.team.id);
   }),
 });

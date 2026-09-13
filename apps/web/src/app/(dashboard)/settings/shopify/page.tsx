@@ -25,6 +25,20 @@ export default function ShopifySettingsPage() {
   const getInstallUrl = api.shopify.getInstallUrl.useMutation();
   const disconnect = api.shopify.disconnect.useMutation();
   const syncNow = api.shopify.syncNow.useMutation();
+  const customerDataPending = config?.customerDataSyncEnabled === false;
+  const { data: trackingSetup } = api.shopify.getTrackingSetup.useQuery(
+    undefined,
+    { enabled: !!store },
+  );
+  const { data: eventStats } = api.shopify.getStorefrontEventStats.useQuery(
+    undefined,
+    { enabled: !!store, refetchInterval: 30000 },
+  );
+  const { data: recentEvents } = api.shopify.getRecentStorefrontEvents.useQuery(
+    undefined,
+    { enabled: !!store, refetchInterval: 30000 },
+  );
+  const [copiedSnippet, setCopiedSnippet] = useState(false);
 
   useEffect(() => {
     const connected = searchParams.get("connected");
@@ -67,13 +81,32 @@ export default function ShopifySettingsPage() {
     }
   };
 
+  const onCopySnippet = async () => {
+    if (!trackingSetup?.snippet) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(trackingSetup.snippet);
+      setCopiedSnippet(true);
+      setTimeout(() => setCopiedSnippet(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy tracking snippet:", error);
+      setMessage("Could not copy tracking snippet.");
+    }
+  };
+
   const onSyncNow = async () => {
     setMessage(null);
 
     try {
       await syncNow.mutateAsync();
       await apiUtils.shopify.getStore.invalidate();
-      setMessage("Shopify data synced successfully.");
+      setMessage(
+        customerDataPending
+          ? "Products synced. Customer and order sync will start after Shopify approval."
+          : "Shopify data synced successfully.",
+      );
     } catch (error) {
       console.error("Failed to sync Shopify store:", error);
       setMessage("Shopify sync failed. Check server logs for details.");
@@ -103,6 +136,13 @@ export default function ShopifySettingsPage() {
           Connect your Shopify store so RioReply can analyze products,
           customers, and orders to run AI marketing automatically.
         </p>
+
+        {customerDataPending ? (
+          <p className="text-sm mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+            Customer and order sync is paused until Shopify approves protected
+            customer data access for this app. Products sync normally.
+          </p>
+        ) : null}
 
         {message ? (
           <p className="text-sm mt-4 rounded-md bg-muted px-3 py-2">{message}</p>
@@ -138,11 +178,15 @@ export default function ShopifySettingsPage() {
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-muted-foreground">Customers</span>
-                <span className="text-sm font-medium">{store.customerCount}</span>
+                <span className="text-sm font-medium">
+                  {customerDataPending ? "Pending approval" : store.customerCount}
+                </span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-muted-foreground">Orders</span>
-                <span className="text-sm font-medium">{store.orderCount}</span>
+                <span className="text-sm font-medium">
+                  {customerDataPending ? "Pending approval" : store.orderCount}
+                </span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-muted-foreground">Sync status</span>
@@ -152,8 +196,14 @@ export default function ShopifySettingsPage() {
               </div>
               {store.syncError ? (
                 <div className="flex justify-between gap-4">
-                  <span className="text-sm text-muted-foreground">Last error</span>
-                  <span className="text-sm font-medium text-destructive">
+                  <span className="text-sm text-muted-foreground">
+                    {customerDataPending ? "Note" : "Last error"}
+                  </span>
+                  <span
+                    className={`text-sm font-medium ${
+                      customerDataPending ? "text-amber-700" : "text-destructive"
+                    }`}
+                  >
                     {store.syncError}
                   </span>
                 </div>
@@ -218,6 +268,87 @@ export default function ShopifySettingsPage() {
           </div>
         )}
       </Card>
+
+      {store && trackingSetup ? (
+        <Card className="rounded-xl p-8 space-y-6">
+          <div>
+            <h2 className="text-base font-semibold">Storefront tracking</h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Add this script to your Shopify theme to capture page views,
+              product views, add to cart, checkout, and purchase events.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-sm font-medium block">Tracking snippet</label>
+            <pre className="rounded-lg border bg-muted/40 p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+              {trackingSetup.snippet}
+            </pre>
+            <Button variant="outline" onClick={onCopySnippet}>
+              {copiedSnippet ? "Copied" : "Copy snippet"}
+            </Button>
+          </div>
+
+          <div className="rounded-lg border p-4 space-y-2 text-sm">
+            <p className="font-medium">Install in Shopify</p>
+            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+              <li>Go to Online Store → Themes → Edit code</li>
+              <li>Open <code className="text-xs">layout/theme.liquid</code></li>
+              <li>Paste the snippet before <code className="text-xs">&lt;/head&gt;</code></li>
+              <li>Save and visit your storefront to verify events appear below</li>
+            </ol>
+          </div>
+
+          {eventStats && eventStats.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Last 24 hours</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {eventStats.map((stat) => (
+                  <div key={stat.eventType} className="rounded-lg border px-3 py-2">
+                    <p className="text-xs text-muted-foreground">
+                      {stat.eventType.replaceAll("_", " ").toLowerCase()}
+                    </p>
+                    <p className="text-lg font-semibold">{stat.count}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No storefront events yet. Install the snippet and browse your store.
+            </p>
+          )}
+
+          {recentEvents && recentEvents.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Recent events</p>
+              <div className="rounded-lg border divide-y">
+                {recentEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        {event.eventType.replaceAll("_", " ").toLowerCase()}
+                      </p>
+                      <p className="text-muted-foreground truncate">
+                        {event.productHandle ??
+                          event.searchQuery ??
+                          event.path ??
+                          "—"}
+                      </p>
+                    </div>
+                    <span className="text-muted-foreground shrink-0">
+                      {format(new Date(event.occurredAt), "PPp")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </Card>
+      ) : null}
     </div>
   );
 }

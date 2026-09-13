@@ -13,11 +13,14 @@ export const SHOPIFY_OAUTH_STATE_PREFIX = "shopify:oauth:";
 
 export const SHOPIFY_PAGE_LIMIT = 250;
 
-export const SHOPIFY_WEBHOOK_TOPICS = [
+export const SHOPIFY_PRODUCT_WEBHOOK_TOPICS = [
   "app/uninstalled",
   "products/create",
   "products/update",
   "products/delete",
+] as const;
+
+export const SHOPIFY_PROTECTED_WEBHOOK_TOPICS = [
   "customers/create",
   "customers/update",
   "orders/create",

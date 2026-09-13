@@ -12,6 +12,7 @@ import {
 } from "~/server/shopify/oauth";
 import { db } from "~/server/db";
 import { ShopifySyncService } from "~/server/service/shopify-sync-service";
+import { isCustomerDataSyncEnabled } from "~/server/shopify/protected-data";
 
 export class ShopifyService {
   static isConfigured() {
@@ -21,6 +22,10 @@ export class ShopifyService {
     } catch {
       return false;
     }
+  }
+
+  static isCustomerDataSyncEnabled() {
+    return isCustomerDataSyncEnabled();
   }
 
   static async getInstallUrl(teamId: number, shopInput: string) {

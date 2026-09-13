@@ -2,13 +2,21 @@ import { ShopifySyncStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { db } from "~/server/db";
 import { ShopifyClient } from "~/server/shopify/client";
-import { SHOPIFY_WEBHOOK_TOPICS } from "~/server/shopify/constants";
+import {
+  SHOPIFY_PRODUCT_WEBHOOK_TOPICS,
+  SHOPIFY_PROTECTED_WEBHOOK_TOPICS,
+} from "~/server/shopify/constants";
 import {
   mapCustomerToUpsert,
   mapOrderToUpsert,
   mapProductToUpsert,
 } from "~/server/shopify/mappers";
 import { getShopifyConfig } from "~/server/shopify/oauth";
+import {
+  isCustomerDataSyncEnabled,
+  isProtectedCustomerDataError,
+  PROTECTED_CUSTOMER_DATA_MESSAGE,
+} from "~/server/shopify/protected-data";
 import type {
   ShopifyRestCustomer,
   ShopifyRestOrder,
@@ -48,7 +56,11 @@ export class ShopifySyncService {
     const existing = await client.listWebhooks();
     const existingTopics = new Set(existing.map((webhook) => webhook.topic));
 
-    for (const topic of SHOPIFY_WEBHOOK_TOPICS) {
+    const topics = isCustomerDataSyncEnabled()
+      ? [...SHOPIFY_PRODUCT_WEBHOOK_TOPICS, ...SHOPIFY_PROTECTED_WEBHOOK_TOPICS]
+      : [...SHOPIFY_PRODUCT_WEBHOOK_TOPICS];
+
+    for (const topic of topics) {
       if (existingTopics.has(topic)) {
         continue;
       }
@@ -71,12 +83,32 @@ export class ShopifySyncService {
       },
     });
 
+    let customerDataNote: string | null = null;
+
     try {
       const client = this.getClient(store);
 
       await this.syncProducts(store.id, store.shopDomain, client);
-      await this.syncCustomers(store.id, client);
-      await this.syncOrders(store.id, client);
+
+      if (isCustomerDataSyncEnabled()) {
+        try {
+          await this.syncCustomers(store.id, client);
+          await this.syncOrders(store.id, client);
+        } catch (error) {
+          if (isProtectedCustomerDataError(error)) {
+            customerDataNote = PROTECTED_CUSTOMER_DATA_MESSAGE;
+            logger.warn(
+              { storeId },
+              "Shopify protected customer data not approved; skipping customers and orders",
+            );
+          } else {
+            throw error;
+          }
+        }
+      } else {
+        customerDataNote = PROTECTED_CUSTOMER_DATA_MESSAGE;
+      }
+
       await this.registerWebhooks(store.id);
 
       const [productCount, customerCount, orderCount] = await Promise.all([
@@ -89,7 +121,7 @@ export class ShopifySyncService {
         where: { id: store.id },
         data: {
           syncStatus: ShopifySyncStatus.IDLE,
-          syncError: null,
+          syncError: customerDataNote,
           productCount,
           customerCount,
           orderCount,
@@ -162,7 +194,7 @@ export class ShopifySyncService {
   ) {
     let customerId: string | null = null;
 
-    if (order.customer?.id) {
+    if (order.customer?.id && isCustomerDataSyncEnabled()) {
       const shopifyCustomerId = String(order.customer.id);
       let customer = await db.shopifyCustomer.findUnique({
         where: {
@@ -241,6 +273,13 @@ export class ShopifySyncService {
     }
 
     const client = this.getClient(store);
+    const isProtectedTopic = SHOPIFY_PROTECTED_WEBHOOK_TOPICS.includes(
+      topic as (typeof SHOPIFY_PROTECTED_WEBHOOK_TOPICS)[number],
+    );
+
+    if (isProtectedTopic && !isCustomerDataSyncEnabled()) {
+      return;
+    }
 
     switch (topic) {
       case "products/create":

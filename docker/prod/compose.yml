@@ -80,6 +80,7 @@ services:
       - SHOPIFY_API_SECRET=${SHOPIFY_API_SECRET:-}
       - SHOPIFY_APP_URL=${SHOPIFY_APP_URL:-}
       - SHOPIFY_SCOPES=${SHOPIFY_SCOPES:-}
+      - SHOPIFY_SYNC_CUSTOMER_DATA=${SHOPIFY_SYNC_CUSTOMER_DATA:-false}
     depends_on:
       postgres:
         condition: service_healthy
