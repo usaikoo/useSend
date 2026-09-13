@@ -4,6 +4,7 @@ import { db } from "~/server/db";
 import { ShopifyService } from "~/server/service/shopify-service";
 import { normalizeShopDomain } from "~/server/shopify/oauth";
 import { ShopifyInstallClient } from "./shopify-install-client";
+import { ShopifyInstallLanding } from "./shopify-install-landing";
 
 export default async function ShopifyInstallPage({
   searchParams,
@@ -20,8 +21,10 @@ export default async function ShopifyInstallPage({
   const session = await getServerAuthSession();
 
   if (!session?.user) {
-    redirect(
-      `/login?callbackUrl=${encodeURIComponent(`/shopify/install?shop=${shopDomain}`)}`,
+    const loginUrl = `/login?callbackUrl=${encodeURIComponent(`/shopify/install?shop=${shopDomain}`)}`;
+
+    return (
+      <ShopifyInstallLanding shopDomain={shopDomain} loginUrl={loginUrl} />
     );
   }
 
