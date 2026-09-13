@@ -1,0 +1,28 @@
+# RioReply Shopify app config — used by Shopify CLI to deploy theme extensions.
+# Set client_id to your SHOPIFY_API_KEY from Partner Dashboard, then run:
+#   shopify app config link
+#   shopify app deploy
+
+name = "RioReply - AI Marketing Agent"
+client_id = "YOUR_SHOPIFY_API_KEY"
+handle = "rioreply"
+application_url = "https://app.rioreply.app/shopify/install"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,read_customers,read_orders,read_content"
+
+[build]
+automatically_update_urls_on_dev = false
+
+[auth]
+redirect_urls = [
+  "https://app.rioreply.app/api/shopify/callback",
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://app.rioreply.app/api/webhook/shopify"

@@ -1,8 +1,11 @@
 import { Prisma, ShopifyStoreStatus } from "@prisma/client";
 import { env } from "~/env";
 import { db } from "~/server/db";
+import { normalizeShopDomain } from "~/server/shopify/oauth";
+import { buildThemeEditorAppEmbedUrl } from "~/server/shopify/theme-editor";
 import {
   buildTrackingScriptUrl,
+  buildTrackingScriptUrlByShop,
   buildTrackingSnippet,
 } from "~/server/shopify/storefront-tracker-script";
 import {
@@ -40,12 +43,36 @@ export class ShopifyTrackingService {
     }
 
     const appUrl = this.getAppUrl();
+    const embedScriptUrl = buildTrackingScriptUrlByShop(
+      appUrl,
+      store.shopDomain,
+    );
+    const recentEventCount = await db.shopifyStorefrontEvent.count({
+      where: {
+        storeId: store.id,
+        occurredAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+    });
+
+    let themeEditorEmbedUrl: string | null = null;
+
+    try {
+      themeEditorEmbedUrl = buildThemeEditorAppEmbedUrl(store.shopDomain);
+    } catch {
+      themeEditorEmbedUrl = null;
+    }
 
     return {
       trackingPublicKey: store.trackingPublicKey,
+      shopDomain: store.shopDomain,
       scriptUrl: buildTrackingScriptUrl(appUrl, store.trackingPublicKey),
+      embedScriptUrl,
       snippet: buildTrackingSnippet(appUrl, store.trackingPublicKey),
+      embedSnippet: `<script async src="${embedScriptUrl}"></script>`,
       endpoint: `${appUrl}/api/track/shopify`,
+      themeEditorEmbedUrl,
+      embedStatus:
+        recentEventCount > 0 ? ("receiving_events" as const) : ("not_detected" as const),
     };
   }
 
@@ -119,8 +146,46 @@ export class ShopifyTrackingService {
       select: {
         id: true,
         shopDomain: true,
+        trackingPublicKey: true,
       },
     });
+  }
+
+  static async getStoreByShopDomain(shopDomain: string) {
+    let normalizedDomain: string;
+
+    try {
+      normalizedDomain = normalizeShopDomain(shopDomain);
+    } catch {
+      return null;
+    }
+
+    return db.shopifyStore.findFirst({
+      where: {
+        shopDomain: normalizedDomain,
+        status: ShopifyStoreStatus.ACTIVE,
+      },
+      select: {
+        id: true,
+        shopDomain: true,
+        trackingPublicKey: true,
+      },
+    });
+  }
+
+  static async resolveStoreForScript(params: {
+    key?: string | null;
+    shop?: string | null;
+  }) {
+    if (params.key) {
+      return this.getStoreByTrackingKey(params.key);
+    }
+
+    if (params.shop) {
+      return this.getStoreByShopDomain(params.shop);
+    }
+
+    return null;
   }
 
   static parseEventInput(body: unknown) {

@@ -13,6 +13,11 @@ export function buildTrackingScriptUrl(appUrl: string, trackingKey: string) {
   return `${base}/api/track/shopify.js?key=${encodeURIComponent(trackingKey)}`;
 }
 
+export function buildTrackingScriptUrlByShop(appUrl: string, shopDomain: string) {
+  const base = appUrl.replace(/\/$/, "");
+  return `${base}/api/track/shopify.js?shop=${encodeURIComponent(shopDomain)}`;
+}
+
 export function buildTrackingSnippet(appUrl: string, trackingKey: string) {
   const scriptUrl = buildTrackingScriptUrl(appUrl, trackingKey);
   return `<script async src="${scriptUrl}"></script>`;

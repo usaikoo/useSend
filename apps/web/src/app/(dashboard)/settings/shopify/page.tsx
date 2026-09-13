@@ -337,13 +337,48 @@ export default function ShopifySettingsPage() {
           <div>
             <h2 className="text-base font-semibold">Storefront tracking</h2>
             <p className="text-sm text-muted-foreground mt-2">
-              Add this script to your Shopify theme to capture page views,
-              product views, add to cart, checkout, and purchase events.
+              Enable RioReply in your theme to capture page views, product views,
+              add to cart, checkout, and purchase events.
             </p>
           </div>
 
+          {trackingSetup.embedStatus === "receiving_events" ? (
+            <div className="text-sm rounded-md border border-green-200 bg-green-50 px-3 py-2 text-green-900">
+              Tracking is active — events received in the last 24 hours.
+            </div>
+          ) : (
+            <div className="text-sm rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+              No storefront events detected yet. Enable the app embed in your
+              theme, then browse your store to verify tracking.
+            </div>
+          )}
+
+          {trackingSetup.themeEditorEmbedUrl ? (
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Recommended: App embed</p>
+              <p className="text-sm text-muted-foreground">
+                Opens the theme editor with RioReply selected under App embeds.
+                Toggle it on and save your theme.
+              </p>
+              <Button asChild>
+                <a
+                  href={trackingSetup.themeEditorEmbedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Enable in Theme Editor
+                </a>
+              </Button>
+            </div>
+          ) : null}
+
           <div className="space-y-3">
-            <label className="text-sm font-medium block">Tracking snippet</label>
+            <label className="text-sm font-medium block">
+              Manual fallback snippet
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Use this only if the app embed is not available yet.
+            </p>
             <pre className="rounded-lg border bg-muted/40 p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
               {trackingSetup.snippet}
             </pre>
@@ -353,7 +388,7 @@ export default function ShopifySettingsPage() {
           </div>
 
           <div className="rounded-lg border p-4 space-y-2 text-sm">
-            <p className="font-medium">Install in Shopify</p>
+            <p className="font-medium">Manual install (fallback)</p>
             <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
               <li>Go to Online Store → Themes → Edit code</li>
               <li>Open <code className="text-xs">layout/theme.liquid</code></li>

@@ -1,0 +1,14 @@
+<script async src="https://app.rioreply.app/api/track/shopify.js?shop={{ shop.permanent_domain | url_encode }}"></script>
+
+{% schema %}
+{
+  "name": "RioReply",
+  "target": "head",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Tracks storefront behavior (page views, product views, add to cart) for RioReply AI marketing."
+    }
+  ]
+}
+{% endschema %}

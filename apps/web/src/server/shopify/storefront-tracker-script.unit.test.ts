@@ -3,6 +3,7 @@ import {
   buildStorefrontTrackerScript,
   buildTrackingSnippet,
   buildTrackingScriptUrl,
+  buildTrackingScriptUrlByShop,
 } from "~/server/shopify/storefront-tracker-script";
 
 describe("storefront tracker script", () => {
@@ -10,6 +11,17 @@ describe("storefront tracker script", () => {
     expect(
       buildTrackingScriptUrl("https://app.rioreply.app", "key/with/slash"),
     ).toBe("https://app.rioreply.app/api/track/shopify.js?key=key%2Fwith%2Fslash");
+  });
+
+  it("builds a script URL with shop domain for app embeds", () => {
+    expect(
+      buildTrackingScriptUrlByShop(
+        "https://app.rioreply.app",
+        "larashopone.myshopify.com",
+      ),
+    ).toBe(
+      "https://app.rioreply.app/api/track/shopify.js?shop=larashopone.myshopify.com",
+    );
   });
 
   it("builds an installable HTML snippet", () => {

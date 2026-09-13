@@ -7,18 +7,22 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const trackingKey = searchParams.get("key");
+  const shopDomain = searchParams.get("shop");
 
-  if (!trackingKey) {
-    return new NextResponse("// Missing tracking key", {
+  if (!trackingKey && !shopDomain) {
+    return new NextResponse("// Missing tracking key or shop domain", {
       status: 400,
       headers: { "Content-Type": "application/javascript; charset=utf-8" },
     });
   }
 
-  const store = await ShopifyTrackingService.getStoreByTrackingKey(trackingKey);
+  const store = await ShopifyTrackingService.resolveStoreForScript({
+    key: trackingKey,
+    shop: shopDomain,
+  });
 
   if (!store) {
-    return new NextResponse("// Invalid tracking key", {
+    return new NextResponse("// Store not found", {
       status: 404,
       headers: { "Content-Type": "application/javascript; charset=utf-8" },
     });
@@ -36,7 +40,7 @@ export async function GET(req: Request) {
   }
 
   const script = buildStorefrontTrackerScript({
-    trackingKey,
+    trackingKey: store.trackingPublicKey,
     endpoint: `${appUrl}/api/track/shopify`,
   });
 

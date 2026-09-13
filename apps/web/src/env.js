@@ -79,6 +79,7 @@ export const env = createEnv({
     SHOPIFY_API_SECRET: z.string().optional(),
     SHOPIFY_SCOPES: z.string().optional(),
     SHOPIFY_APP_URL: z.string().url().optional(),
+    SHOPIFY_THEME_EXTENSION_UID: z.string().optional(),
     SHOPIFY_SYNC_CUSTOMER_DATA: z
       .string()
       .optional()
@@ -151,6 +152,7 @@ export const env = createEnv({
     SHOPIFY_API_SECRET: process.env.SHOPIFY_API_SECRET,
     SHOPIFY_SCOPES: process.env.SHOPIFY_SCOPES,
     SHOPIFY_APP_URL: process.env.SHOPIFY_APP_URL,
+    SHOPIFY_THEME_EXTENSION_UID: process.env.SHOPIFY_THEME_EXTENSION_UID,
     SHOPIFY_SYNC_CUSTOMER_DATA: process.env.SHOPIFY_SYNC_CUSTOMER_DATA,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENAI_MODEL: process.env.OPENAI_MODEL,
