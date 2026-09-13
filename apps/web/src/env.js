@@ -75,6 +75,10 @@ export const env = createEnv({
         .string()
         .optional()
         .transform((str) => (str ? parseInt(str, 10) : undefined)),
+    SHOPIFY_API_KEY: z.string().optional(),
+    SHOPIFY_API_SECRET: z.string().optional(),
+    SHOPIFY_SCOPES: z.string().optional(),
+    SHOPIFY_APP_URL: z.string().url().optional(),
   },
 
   /**
@@ -137,6 +141,10 @@ export const env = createEnv({
     SMTP_USER: process.env.SMTP_USER,
     CONTACT_BOOK_ID: process.env.CONTACT_BOOK_ID,
     EMAIL_CLEANUP_DAYS: process.env.EMAIL_CLEANUP_DAYS,
+    SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY,
+    SHOPIFY_API_SECRET: process.env.SHOPIFY_API_SECRET,
+    SHOPIFY_SCOPES: process.env.SHOPIFY_SCOPES,
+    SHOPIFY_APP_URL: process.env.SHOPIFY_APP_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
