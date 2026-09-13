@@ -95,7 +95,10 @@ export class ShopifyClient {
   }
 
   async listProducts() {
-    return this.paginate<"products", ShopifyRestProduct>("/products.json", "/products.json");
+    return this.paginate<"products", ShopifyRestProduct>(
+      "products",
+      "/products.json",
+    );
   }
 
   async getProduct(productId: string) {
