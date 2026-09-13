@@ -29,6 +29,10 @@ export const storefrontEventInputSchema = z.object({
   value: z.number().finite().optional(),
   currency: z.string().max(8).optional(),
   quantity: z.number().int().positive().optional(),
+  shopifyCustomerId: z.string().max(64).optional(),
+  email: z.string().email().max(320).optional(),
+  firstName: z.string().max(128).optional(),
+  lastName: z.string().max(128).optional(),
   occurredAt: z.string().datetime().optional(),
   metadata: z.record(z.unknown()).optional(),
 });

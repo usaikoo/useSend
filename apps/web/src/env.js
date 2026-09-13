@@ -83,6 +83,8 @@ export const env = createEnv({
       .string()
       .optional()
       .transform((str) => str === "true"),
+    OPENAI_API_KEY: z.string().optional(),
+    OPENAI_MODEL: z.string().optional(),
   },
 
   /**
@@ -150,6 +152,8 @@ export const env = createEnv({
     SHOPIFY_SCOPES: process.env.SHOPIFY_SCOPES,
     SHOPIFY_APP_URL: process.env.SHOPIFY_APP_URL,
     SHOPIFY_SYNC_CUSTOMER_DATA: process.env.SHOPIFY_SYNC_CUSTOMER_DATA,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_MODEL: process.env.OPENAI_MODEL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -38,7 +38,27 @@ export default function ShopifySettingsPage() {
     undefined,
     { enabled: !!store, refetchInterval: 30000 },
   );
+  const { data: marketingSettings } = api.shopify.getMarketingSettings.useQuery(
+    undefined,
+    { enabled: !!store },
+  );
+  const { data: rioReplyActions } = api.shopify.getRioReplyActions.useQuery(
+    undefined,
+    { enabled: !!store, refetchInterval: 30000 },
+  );
+  const { data: domains } = api.domain.domains.useQuery(undefined, {
+    enabled: !!store,
+  });
+  const updateMarketingSettings = api.shopify.updateMarketingSettings.useMutation();
+  const runMarketingNow = api.shopify.runMarketingNow.useMutation();
   const [copiedSnippet, setCopiedSnippet] = useState(false);
+  const [fromEmail, setFromEmail] = useState("");
+
+  useEffect(() => {
+    if (marketingSettings?.fromEmail) {
+      setFromEmail(marketingSettings.fromEmail);
+    }
+  }, [marketingSettings?.fromEmail]);
 
   useEffect(() => {
     const connected = searchParams.get("connected");
@@ -93,6 +113,35 @@ export default function ShopifySettingsPage() {
     } catch (error) {
       console.error("Failed to copy tracking snippet:", error);
       setMessage("Could not copy tracking snippet.");
+    }
+  };
+
+  const onSaveMarketingSettings = async (enabled?: boolean) => {
+    setMessage(null);
+
+    try {
+      await updateMarketingSettings.mutateAsync({
+        enabled: enabled ?? marketingSettings?.enabled ?? false,
+        fromEmail: fromEmail || null,
+      });
+      await apiUtils.shopify.getMarketingSettings.invalidate();
+      setMessage("RioReply autopilot settings saved.");
+    } catch (error) {
+      console.error("Failed to save marketing settings:", error);
+      setMessage("Could not save RioReply autopilot settings.");
+    }
+  };
+
+  const onRunMarketingNow = async () => {
+    setMessage(null);
+
+    try {
+      const actions = await runMarketingNow.mutateAsync();
+      await apiUtils.shopify.getRioReplyActions.invalidate();
+      setMessage(`RioReply evaluated ${actions.length} product interest opportunities.`);
+    } catch (error) {
+      console.error("Failed to run RioReply marketing:", error);
+      setMessage("RioReply marketing run failed.");
     }
   };
 
@@ -361,6 +410,129 @@ export default function ShopifySettingsPage() {
               </div>
             </div>
           ) : null}
+        </Card>
+      ) : null}
+
+      {store && marketingSettings ? (
+        <Card className="rounded-xl p-8 space-y-6">
+          <div>
+            <h2 className="text-base font-semibold">AI marketing autopilot</h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              RioReply detects product interest from storefront behavior and can
+              send a personalized reminder email when the rules allow it.
+            </p>
+          </div>
+
+          <div className="rounded-lg border p-4 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Enable product interest emails</p>
+                <p className="text-xs text-muted-foreground">
+                  Sends when a visitor views the same product 3+ times without purchasing.
+                </p>
+              </div>
+              <Button
+                variant={marketingSettings.enabled ? "default" : "outline"}
+                onClick={() => onSaveMarketingSettings(!marketingSettings.enabled)}
+                disabled={updateMarketingSettings.isPending}
+              >
+                {marketingSettings.enabled ? "Enabled" : "Disabled"}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="from-email" className="text-sm font-medium block">
+                Sender email
+              </label>
+              <Input
+                id="from-email"
+                placeholder="hello@yourdomain.com"
+                value={fromEmail}
+                onChange={(event) => setFromEmail(event.target.value)}
+                list="verified-domains"
+              />
+              <datalist id="verified-domains">
+                {domains?.map((domain) => (
+                  <option
+                    key={domain.id}
+                    value={`hello@${domain.name}`}
+                  />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => onSaveMarketingSettings()}
+                disabled={updateMarketingSettings.isPending}
+              >
+                {updateMarketingSettings.isPending ? (
+                  <Spinner className="w-4 h-4" />
+                ) : (
+                  "Save autopilot settings"
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onRunMarketingNow}
+                disabled={runMarketingNow.isPending}
+              >
+                {runMarketingNow.isPending ? (
+                  <Spinner className="w-4 h-4" />
+                ) : (
+                  "Run now"
+                )}
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {marketingSettings.openAiConfigured
+                ? "OpenAI is configured for email generation."
+                : "OpenAI is not configured. RioReply will use a template fallback."}
+            </p>
+          </div>
+
+          {rioReplyActions && rioReplyActions.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Recent RioReply actions</p>
+              <div className="rounded-lg border divide-y">
+                {rioReplyActions.map((action) => (
+                  <div key={action.id} className="px-4 py-3 space-y-1 text-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="font-medium">
+                        {action.productTitle ?? "Product interest"}
+                      </p>
+                      <span
+                        className={
+                          action.status === "SENT"
+                            ? "text-green-600"
+                            : action.status === "FAILED"
+                              ? "text-destructive"
+                              : "text-muted-foreground"
+                        }
+                      >
+                        {action.status.toLowerCase()}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground">{action.explanation}</p>
+                    {action.recipientEmail ? (
+                      <p className="text-xs text-muted-foreground">
+                        {action.recipientEmail}
+                        {action.subject ? ` · ${action.subject}` : ""}
+                      </p>
+                    ) : null}
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(action.createdAt), "PPp")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No RioReply actions yet. Enable autopilot, install tracking, and browse products on your storefront.
+            </p>
+          )}
         </Card>
       ) : null}
     </div>

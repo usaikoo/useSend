@@ -7,6 +7,9 @@ import {
 import { ShopifyService } from "~/server/service/shopify-service";
 import { ShopifySyncService } from "~/server/service/shopify-sync-service";
 import { ShopifyTrackingService } from "~/server/service/shopify-tracking-service";
+import { ShopifyMarketingEngine } from "~/server/service/shopify-marketing-engine";
+import { OpenAiEmailService } from "~/server/service/openai-email-service";
+import { db } from "~/server/db";
 import { TRPCError } from "@trpc/server";
 
 export const shopifyRouter = createTRPCRouter({
@@ -56,5 +59,73 @@ export const shopifyRouter = createTRPCRouter({
 
   getStorefrontEventStats: teamProcedure.query(async ({ ctx }) => {
     return ShopifyTrackingService.getEventStatsForTeam(ctx.team.id);
+  }),
+
+  getMarketingSettings: teamProcedure.query(async ({ ctx }) => {
+    const store = await ShopifyService.getStoreForTeam(ctx.team.id);
+
+    if (!store) {
+      return null;
+    }
+
+    const settings = await ShopifyMarketingEngine.getOrCreateSettings(store.id);
+
+    return {
+      ...settings,
+      openAiConfigured: OpenAiEmailService.isConfigured(),
+    };
+  }),
+
+  updateMarketingSettings: teamAdminProcedure
+    .input(
+      z.object({
+        enabled: z.boolean().optional(),
+        fromEmail: z.string().email().optional().nullable(),
+        minProductViews: z.number().int().min(2).max(20).optional(),
+        cooldownHours: z.number().int().min(1).max(720).optional(),
+        maxEmailsPerVisitorWeek: z.number().int().min(1).max(20).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const store = await db.shopifyStore.findFirst({
+        where: { teamId: ctx.team.id, status: "ACTIVE" },
+      });
+
+      if (!store) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No connected Shopify store found",
+        });
+      }
+
+      await ShopifyMarketingEngine.getOrCreateSettings(store.id);
+
+      return db.shopifyMarketingSettings.update({
+        where: { storeId: store.id },
+        data: input,
+      });
+    }),
+
+  getRioReplyActions: teamProcedure.query(async ({ ctx }) => {
+    return db.rioReplyAction.findMany({
+      where: { teamId: ctx.team.id },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+    });
+  }),
+
+  runMarketingNow: teamAdminProcedure.mutation(async ({ ctx }) => {
+    const store = await db.shopifyStore.findFirst({
+      where: { teamId: ctx.team.id, status: "ACTIVE" },
+    });
+
+    if (!store) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No connected Shopify store found",
+      });
+    }
+
+    return ShopifyMarketingEngine.evaluateStore(store.id);
   }),
 });

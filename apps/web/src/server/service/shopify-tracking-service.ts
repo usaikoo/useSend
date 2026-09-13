@@ -9,6 +9,7 @@ import {
   storefrontEventInputSchema,
   type StorefrontEventInput,
 } from "~/server/shopify/storefront-events";
+import { ShopifyVisitorService } from "~/server/service/shopify-visitor-service";
 
 export class ShopifyTrackingService {
   static getAppUrl() {
@@ -141,7 +142,7 @@ export class ShopifyTrackingService {
         ? undefined
         : (input.metadata as Prisma.InputJsonValue);
 
-    return db.shopifyStorefrontEvent.create({
+    const event = await db.shopifyStorefrontEvent.create({
       data: {
         storeId: store.id,
         sessionId: input.sessionId,
@@ -164,5 +165,18 @@ export class ShopifyTrackingService {
         occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
       },
     });
+
+    if (input.visitorId) {
+      await ShopifyVisitorService.upsertFromEvent({
+        storeId: store.id,
+        visitorId: input.visitorId,
+        email: input.email,
+        shopifyCustomerId: input.shopifyCustomerId,
+        firstName: input.firstName,
+        lastName: input.lastName,
+      });
+    }
+
+    return event;
   }
 }

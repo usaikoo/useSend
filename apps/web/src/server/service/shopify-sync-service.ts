@@ -23,6 +23,7 @@ import type {
   ShopifyRestProduct,
 } from "~/server/shopify/types";
 import { logger } from "~/server/logger/log";
+import { ShopifyVisitorService } from "~/server/service/shopify-visitor-service";
 
 export class ShopifySyncService {
   static async getActiveStoreForTeam(teamId: number) {
@@ -250,7 +251,16 @@ export class ShopifySyncService {
   }
 
   static async upsertCustomer(storeId: string, customer: ShopifyRestCustomer) {
-    return db.shopifyCustomer.upsert(mapCustomerToUpsert(storeId, customer));
+    const saved = await db.shopifyCustomer.upsert(
+      mapCustomerToUpsert(storeId, customer),
+    );
+
+    await ShopifyVisitorService.syncConsentFromCustomer(
+      storeId,
+      String(customer.id),
+    );
+
+    return saved;
   }
 
   static async deleteProduct(storeId: string, shopifyProductId: string) {

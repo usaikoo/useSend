@@ -170,15 +170,43 @@ To confirm purchases, attribute revenue, suppress redundant messages after check
 
 ---
 
+## Mandatory compliance webhooks (required)
+
+Configure in Partner Dashboard → Apps → RioReply → **Configuration** → **Compliance webhooks**:
+
+| Topic | URL |
+|-------|-----|
+| Customer data request | `https://app.rioreply.app/api/webhook/shopify` |
+| Customer data erasure | `https://app.rioreply.app/api/webhook/shopify` |
+| Shop data erasure | `https://app.rioreply.app/api/webhook/shopify` |
+
+All three topics use the same endpoint. The app verifies HMAC, returns `200 OK`, and:
+
+- **customers/data_request** — logs the request and compiles stored customer data for the merchant
+- **customers/redact** — deletes customer, order, visitor, and RioReply action records
+- **shop/redact** — deletes all store data 48 hours after uninstall
+
+Test with Shopify CLI:
+
+```bash
+shopify webhook trigger --topic customers/data_request --api-version 2024-10
+shopify webhook trigger --topic customers/redact --api-version 2024-10
+shopify webhook trigger --topic shop/redact --api-version 2024-10
+```
+
+---
+
 ## Checklist before submitting
 
 - [ ] Privacy policy live at https://rioreply.app/privacy
 - [ ] App URL configured: https://app.rioreply.app/shopify/install
 - [ ] Redirect URL configured: https://app.rioreply.app/api/shopify/callback
+- [ ] **Compliance webhooks configured** (all 3 topics → `/api/webhook/shopify`)
 - [ ] Demo store connected and product sync working
 - [ ] Tracking snippet tested (events visible in dashboard)
 - [ ] 2–3 minute demo video recorded
 - [ ] Support email configured: privacy@rioreply.app
+- [ ] Data protection details answered Yes where implemented
 - [ ] Submit protected customer data request in Partner Dashboard → App → API access
 
 ---

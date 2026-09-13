@@ -126,6 +126,7 @@ model Team {
   webhookEndpoints Webhook[]
   webhookCalls     WebhookCall[]
   shopifyStores    ShopifyStore[]
+  rioReplyActions  RioReplyAction[]
 }
 
 enum ShopifyStoreStatus {
@@ -149,6 +150,17 @@ enum ShopifyStorefrontEventType {
   REMOVE_FROM_CART
   CHECKOUT_STARTED
   PURCHASE
+}
+
+enum RioReplyTriggerType {
+  PRODUCT_INTEREST
+}
+
+enum RioReplyActionStatus {
+  DETECTED
+  SKIPPED
+  SENT
+  FAILED
 }
 
 model ShopifyStore {
@@ -177,10 +189,73 @@ model ShopifyStore {
   products         ShopifyProduct[]
   customers        ShopifyCustomer[]
   orders           ShopifyOrder[]
-  storefrontEvents ShopifyStorefrontEvent[]
+  storefrontEvents    ShopifyStorefrontEvent[]
+  marketingSettings   ShopifyMarketingSettings?
+  visitorProfiles     ShopifyVisitorProfile[]
+  rioReplyActions     RioReplyAction[]
 
   @@unique([teamId, shopDomain])
   @@index([teamId])
+}
+
+model ShopifyMarketingSettings {
+  id                      String       @id @default(cuid())
+  storeId                 String       @unique
+  enabled                 Boolean      @default(false)
+  fromEmail               String?
+  minProductViews         Int          @default(3)
+  viewWindowHours         Int          @default(168)
+  cooldownHours           Int          @default(72)
+  maxEmailsPerVisitorWeek Int          @default(2)
+  contactBookId           String?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  store                   ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+model ShopifyVisitorProfile {
+  id                    String       @id @default(cuid())
+  storeId               String
+  visitorId             String
+  email                 String?
+  shopifyCustomerId     String?
+  firstName             String?
+  lastName              String?
+  emailMarketingConsent Boolean?
+  lastMarketingEmailAt  DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  store                 ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, visitorId])
+  @@index([storeId, email])
+  @@index([storeId, shopifyCustomerId])
+}
+
+model RioReplyAction {
+  id               String               @id @default(cuid())
+  storeId          String
+  teamId           Int
+  triggerType      RioReplyTriggerType
+  status           RioReplyActionStatus
+  visitorId        String?
+  shopifyProductId String?
+  productTitle     String?
+  recipientEmail   String?
+  emailId          String?
+  campaignId       String?
+  explanation      String
+  skipReason       String?
+  subject          String?
+  metadata         Json?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  store            ShopifyStore         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  team             Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt(sort: Desc)])
+  @@index([storeId, visitorId, shopifyProductId])
+  @@index([teamId, createdAt(sort: Desc)])
 }
 
 model ShopifyStorefrontEvent {

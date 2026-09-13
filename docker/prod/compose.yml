@@ -81,6 +81,8 @@ services:
       - SHOPIFY_APP_URL=${SHOPIFY_APP_URL:-}
       - SHOPIFY_SCOPES=${SHOPIFY_SCOPES:-}
       - SHOPIFY_SYNC_CUSTOMER_DATA=${SHOPIFY_SYNC_CUSTOMER_DATA:-false}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
     depends_on:
       postgres:
         condition: service_healthy

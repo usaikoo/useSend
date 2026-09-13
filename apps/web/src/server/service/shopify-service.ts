@@ -122,6 +122,7 @@ export class ShopifyService {
       },
       select: {
         id: true,
+        teamId: true,
         shopDomain: true,
         shopName: true,
         shopEmail: true,

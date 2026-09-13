@@ -38,6 +38,13 @@ export async function register() {
     );
     await CampaignSchedulerService.start();
 
+    if (process.env.REDIS_URL) {
+      const { ShopifyMarketingSchedulerService } = await import(
+        "~/server/jobs/shopify-marketing-job"
+      );
+      await ShopifyMarketingSchedulerService.start();
+    }
+
     initialized = true;
   }
 }
