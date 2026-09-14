@@ -11,7 +11,12 @@ import {
   verifyOAuthHmac,
 } from "~/server/shopify/oauth";
 import { db } from "~/server/db";
+import { logger } from "~/server/logger/log";
 import { ShopifySyncService } from "~/server/service/shopify-sync-service";
+import {
+  classifyShopifyOAuthError,
+  getShopifyOAuthErrorLogFields,
+} from "~/server/shopify/oauth-errors";
 import { isCustomerDataSyncEnabled } from "~/server/shopify/protected-data";
 
 export class ShopifyService {
@@ -32,6 +37,8 @@ export class ShopifyService {
     const shopDomain = normalizeShopDomain(shopInput);
     const state = await createOAuthState(teamId, shopDomain);
 
+    logger.info({ teamId, shopDomain }, "Starting Shopify OAuth install flow");
+
     return {
       url: buildInstallUrl(shopDomain, state),
       shopDomain,
@@ -44,9 +51,18 @@ export class ShopifyService {
     state: string;
     query: Record<string, string | string[] | undefined>;
   }) {
+    const shopDomain = normalizeShopDomain(params.shop);
+
+    logger.info(
+      { shopDomain, hasCode: Boolean(params.code), hasState: Boolean(params.state) },
+      "Shopify OAuth callback received",
+    );
+
     const { apiSecret } = getShopifyConfig();
 
     if (!verifyOAuthHmac(params.query, apiSecret)) {
+      logger.warn({ shopDomain }, "Shopify OAuth HMAC verification failed");
+
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Invalid Shopify OAuth signature",
@@ -55,60 +71,123 @@ export class ShopifyService {
 
     const oauthState = await consumeOAuthState(params.state);
     if (!oauthState) {
+      logger.warn({ shopDomain }, "Shopify OAuth state expired or invalid");
+
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "OAuth state expired or invalid",
       });
     }
 
-    const shopDomain = normalizeShopDomain(params.shop);
     if (shopDomain !== oauthState.shopDomain) {
+      logger.warn(
+        {
+          shopDomain,
+          expectedShopDomain: oauthState.shopDomain,
+          teamId: oauthState.teamId,
+        },
+        "Shopify OAuth shop domain mismatch",
+      );
+
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Shop domain mismatch",
       });
     }
 
-    const tokenSet = await exchangeAccessToken(shopDomain, params.code);
+    let tokenSet;
 
-    const client = new ShopifyClient(shopDomain, tokenSet.accessToken);
-    const shop = await client.getShop();
+    try {
+      tokenSet = await exchangeAccessToken(shopDomain, params.code);
+    } catch (error) {
+      logger.error(
+        {
+          shopDomain,
+          teamId: oauthState.teamId,
+          ...getShopifyOAuthErrorLogFields(error),
+        },
+        "Shopify OAuth token exchange failed",
+      );
+      throw error;
+    }
 
-    const store = await db.shopifyStore.upsert({
-      where: { shopDomain },
-      create: {
-        teamId: oauthState.teamId,
+    let shop;
+
+    try {
+      const client = new ShopifyClient(shopDomain, tokenSet.accessToken);
+      shop = await client.getShop();
+    } catch (error) {
+      logger.error(
+        {
+          shopDomain,
+          teamId: oauthState.teamId,
+          ...getShopifyOAuthErrorLogFields(error),
+        },
+        "Shopify shop lookup failed after OAuth",
+      );
+      throw error;
+    }
+
+    let store;
+
+    try {
+      store = await db.shopifyStore.upsert({
+        where: { shopDomain },
+        create: {
+          teamId: oauthState.teamId,
+          shopDomain,
+          accessToken: tokenSet.accessToken,
+          refreshToken: tokenSet.refreshToken,
+          accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
+          refreshTokenExpiresAt: tokenSet.refreshTokenExpiresAt,
+          scope: tokenSet.scope,
+          status: ShopifyStoreStatus.ACTIVE,
+          shopName: shop.name,
+          shopEmail: shop.email,
+          currency: shop.currency,
+          timezone: shop.iana_timezone,
+          installedAt: new Date(),
+          lastSyncAt: new Date(),
+        },
+        update: {
+          teamId: oauthState.teamId,
+          accessToken: tokenSet.accessToken,
+          refreshToken: tokenSet.refreshToken,
+          accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
+          refreshTokenExpiresAt: tokenSet.refreshTokenExpiresAt,
+          scope: tokenSet.scope,
+          status: ShopifyStoreStatus.ACTIVE,
+          shopName: shop.name,
+          shopEmail: shop.email,
+          currency: shop.currency,
+          timezone: shop.iana_timezone,
+          uninstalledAt: null,
+          lastSyncAt: new Date(),
+          syncError: null,
+        },
+      });
+    } catch (error) {
+      logger.error(
+        {
+          shopDomain,
+          teamId: oauthState.teamId,
+          oauthErrorCode: classifyShopifyOAuthError(error),
+          ...getShopifyOAuthErrorLogFields(error),
+        },
+        "Shopify store upsert failed after OAuth",
+      );
+      throw error;
+    }
+
+    logger.info(
+      {
         shopDomain,
-        accessToken: tokenSet.accessToken,
-        refreshToken: tokenSet.refreshToken,
-        accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
-        refreshTokenExpiresAt: tokenSet.refreshTokenExpiresAt,
-        scope: tokenSet.scope,
-        status: ShopifyStoreStatus.ACTIVE,
-        shopName: shop.name,
-        shopEmail: shop.email,
-        currency: shop.currency,
-        timezone: shop.iana_timezone,
-        installedAt: new Date(),
-        lastSyncAt: new Date(),
-      },
-      update: {
         teamId: oauthState.teamId,
-        accessToken: tokenSet.accessToken,
-        refreshToken: tokenSet.refreshToken,
-        accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
-        refreshTokenExpiresAt: tokenSet.refreshTokenExpiresAt,
+        storeId: store.id,
         scope: tokenSet.scope,
-        status: ShopifyStoreStatus.ACTIVE,
-        shopName: shop.name,
-        shopEmail: shop.email,
-        currency: shop.currency,
-        timezone: shop.iana_timezone,
-        uninstalledAt: null,
-        lastSyncAt: new Date(),
-        syncError: null,
       },
-    });
+      "Shopify store connected successfully",
+    );
 
     ShopifySyncService.scheduleSync(store.id);
 

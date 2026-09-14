@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { env } from "~/env";
+import { logger } from "~/server/logger/log";
 import { ShopifyService } from "~/server/service/shopify-service";
+import {
+  classifyShopifyOAuthError,
+  getShopifyOAuthErrorLogFields,
+} from "~/server/shopify/oauth-errors";
 
 function getSettingsUrl(params?: Record<string, string>) {
   const baseUrl = (env.SHOPIFY_APP_URL ?? env.NEXTAUTH_URL).replace(/\/$/, "");
@@ -24,6 +29,16 @@ export async function GET(req: Request) {
   const state = query.state;
 
   if (!code || !shop || !state) {
+    logger.warn(
+      {
+        hasCode: Boolean(code),
+        hasShop: Boolean(shop),
+        hasState: Boolean(state),
+        shop,
+      },
+      "Shopify OAuth callback missing required params",
+    );
+
     return NextResponse.redirect(getSettingsUrl({ error: "missing_params" }));
   }
 
@@ -37,7 +52,22 @@ export async function GET(req: Request) {
 
     return NextResponse.redirect(getSettingsUrl({ connected: "1" }));
   } catch (error) {
-    console.error("Shopify OAuth callback failed:", error);
-    return NextResponse.redirect(getSettingsUrl({ error: "oauth_failed" }));
+    const errorDetail = classifyShopifyOAuthError(error);
+
+    logger.error(
+      {
+        shop,
+        errorDetail,
+        ...getShopifyOAuthErrorLogFields(error),
+      },
+      "Shopify OAuth callback failed",
+    );
+
+    return NextResponse.redirect(
+      getSettingsUrl({
+        error: "oauth_failed",
+        error_detail: errorDetail,
+      }),
+    );
   }
 }

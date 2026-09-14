@@ -9,6 +9,10 @@ import { Spinner } from "@usesend/ui/src/spinner";
 import { format } from "date-fns";
 import { useTeam } from "~/providers/team-context";
 import { api } from "~/trpc/react";
+import {
+  getShopifyOAuthErrorMessage,
+  isShopifyOAuthErrorCode,
+} from "~/lib/shopify-oauth-errors";
 
 export default function ShopifySettingsPage() {
   const { currentIsAdmin } = useTeam();
@@ -68,7 +72,12 @@ export default function ShopifySettingsPage() {
       setMessage("Shopify store connected successfully. Sync started.");
       void apiUtils.shopify.getStore.invalidate();
     } else if (error === "oauth_failed") {
-      setMessage("Failed to connect Shopify store. Please try again.");
+      const errorDetail = searchParams.get("error_detail");
+      setMessage(
+        isShopifyOAuthErrorCode(errorDetail)
+          ? getShopifyOAuthErrorMessage(errorDetail)
+          : "Failed to connect Shopify store. Please try again.",
+      );
     } else if (error === "missing_params") {
       setMessage("Shopify returned an incomplete authorization response.");
     } else if (error === "not_configured") {

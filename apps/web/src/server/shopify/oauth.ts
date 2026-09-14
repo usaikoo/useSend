@@ -6,6 +6,7 @@ import {
   SHOPIFY_OAUTH_STATE_TTL_SECONDS,
 } from "~/server/shopify/constants";
 import { getRedis, redisKey } from "~/server/redis";
+import { logger } from "~/server/logger/log";
 import {
   buildTokenExpiryDates,
   type ShopifyOfflineTokenSet,
@@ -151,6 +152,16 @@ function parseOfflineTokenResponse(data: ShopifyTokenResponse): ShopifyOfflineTo
     data.expires_in === undefined ||
     data.refresh_token_expires_in === undefined
   ) {
+    logger.error(
+      {
+        hasRefreshToken: Boolean(data.refresh_token),
+        hasExpiresIn: data.expires_in !== undefined,
+        hasRefreshTokenExpiresIn: data.refresh_token_expires_in !== undefined,
+        scope: data.scope,
+      },
+      "Shopify token response missing expiring offline token fields",
+    );
+
     throw new Error(
       "Shopify did not return expiring offline token credentials. Reconnect the store.",
     );
@@ -187,6 +198,18 @@ async function postTokenRequest(
 
   if (!response.ok) {
     const errorBody = await response.text();
+    const grantType = body.grant_type ?? "authorization_code";
+
+    logger.error(
+      {
+        shopDomain,
+        grantType,
+        status: response.status,
+        responseBody: errorBody.slice(0, 1000),
+      },
+      "Shopify token request failed",
+    );
+
     throw new Error(
       `Failed to exchange Shopify access token (${response.status}): ${errorBody}`,
     );
