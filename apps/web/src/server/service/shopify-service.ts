@@ -69,12 +69,9 @@ export class ShopifyService {
       });
     }
 
-    const { accessToken, scope } = await exchangeAccessToken(
-      shopDomain,
-      params.code,
-    );
+    const tokenSet = await exchangeAccessToken(shopDomain, params.code);
 
-    const client = new ShopifyClient(shopDomain, accessToken);
+    const client = new ShopifyClient(shopDomain, tokenSet.accessToken);
     const shop = await client.getShop();
 
     const store = await db.shopifyStore.upsert({
@@ -82,8 +79,11 @@ export class ShopifyService {
       create: {
         teamId: oauthState.teamId,
         shopDomain,
-        accessToken,
-        scope,
+        accessToken: tokenSet.accessToken,
+        refreshToken: tokenSet.refreshToken,
+        accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
+        refreshTokenExpiresAt: tokenSet.refreshTokenExpiresAt,
+        scope: tokenSet.scope,
         status: ShopifyStoreStatus.ACTIVE,
         shopName: shop.name,
         shopEmail: shop.email,
@@ -94,8 +94,11 @@ export class ShopifyService {
       },
       update: {
         teamId: oauthState.teamId,
-        accessToken,
-        scope,
+        accessToken: tokenSet.accessToken,
+        refreshToken: tokenSet.refreshToken,
+        accessTokenExpiresAt: tokenSet.accessTokenExpiresAt,
+        refreshTokenExpiresAt: tokenSet.refreshTokenExpiresAt,
+        scope: tokenSet.scope,
         status: ShopifyStoreStatus.ACTIVE,
         shopName: shop.name,
         shopEmail: shop.email,
@@ -103,6 +106,7 @@ export class ShopifyService {
         timezone: shop.iana_timezone,
         uninstalledAt: null,
         lastSyncAt: new Date(),
+        syncError: null,
       },
     });
 

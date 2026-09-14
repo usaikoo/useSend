@@ -166,9 +166,12 @@ enum RioReplyActionStatus {
 model ShopifyStore {
   id            String              @id @default(cuid())
   teamId        Int
-  shopDomain    String              @unique
-  accessToken   String
-  scope         String?
+  shopDomain             String              @unique
+  accessToken            String
+  refreshToken           String?
+  accessTokenExpiresAt   DateTime?
+  refreshTokenExpiresAt  DateTime?
+  scope                  String?
   status        ShopifyStoreStatus  @default(ACTIVE)
   syncStatus    ShopifySyncStatus   @default(IDLE)
   syncError     String?

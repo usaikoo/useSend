@@ -6,6 +6,10 @@ import {
   SHOPIFY_OAUTH_STATE_TTL_SECONDS,
 } from "~/server/shopify/constants";
 import { getRedis, redisKey } from "~/server/redis";
+import {
+  buildTokenExpiryDates,
+  type ShopifyOfflineTokenSet,
+} from "~/server/shopify/token-types";
 
 export type ShopifyOAuthState = {
   teamId: number;
@@ -133,38 +137,113 @@ export function verifyWebhookHmac(body: string, hmacHeader: string, secret: stri
   }
 }
 
-export async function exchangeAccessToken(
-  shopDomain: string,
-  code: string,
-): Promise<{ accessToken: string; scope: string }> {
-  const { apiKey, apiSecret } = getShopifyConfig();
+type ShopifyTokenResponse = {
+  access_token: string;
+  scope: string;
+  expires_in?: number;
+  refresh_token?: string;
+  refresh_token_expires_in?: number;
+};
 
+function parseOfflineTokenResponse(data: ShopifyTokenResponse): ShopifyOfflineTokenSet {
+  if (
+    !data.refresh_token ||
+    data.expires_in === undefined ||
+    data.refresh_token_expires_in === undefined
+  ) {
+    throw new Error(
+      "Shopify did not return expiring offline token credentials. Reconnect the store.",
+    );
+  }
+
+  const expiryDates = buildTokenExpiryDates(
+    data.expires_in,
+    data.refresh_token_expires_in,
+  );
+
+  return {
+    accessToken: data.access_token,
+    scope: data.scope,
+    refreshToken: data.refresh_token,
+    ...expiryDates,
+  };
+}
+
+async function postTokenRequest(
+  shopDomain: string,
+  body: Record<string, string>,
+) {
   const response = await fetch(
     `https://${shopDomain}/admin/oauth/access_token`,
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
       },
-      body: JSON.stringify({
-        client_id: apiKey,
-        client_secret: apiSecret,
-        code,
-      }),
+      body: new URLSearchParams(body),
     },
   );
 
   if (!response.ok) {
-    throw new Error("Failed to exchange Shopify access token");
+    const errorBody = await response.text();
+    throw new Error(
+      `Failed to exchange Shopify access token (${response.status}): ${errorBody}`,
+    );
   }
 
-  const data = (await response.json()) as {
-    access_token: string;
-    scope: string;
-  };
+  return (await response.json()) as ShopifyTokenResponse;
+}
 
-  return {
-    accessToken: data.access_token,
-    scope: data.scope,
-  };
+export async function exchangeAccessToken(
+  shopDomain: string,
+  code: string,
+): Promise<ShopifyOfflineTokenSet> {
+  const { apiKey, apiSecret } = getShopifyConfig();
+
+  const data = await postTokenRequest(shopDomain, {
+    client_id: apiKey,
+    client_secret: apiSecret,
+    code,
+    expiring: "1",
+  });
+
+  return parseOfflineTokenResponse(data);
+}
+
+export async function refreshOfflineAccessToken(
+  shopDomain: string,
+  refreshToken: string,
+): Promise<ShopifyOfflineTokenSet> {
+  const { apiKey, apiSecret } = getShopifyConfig();
+
+  const data = await postTokenRequest(shopDomain, {
+    grant_type: "refresh_token",
+    client_id: apiKey,
+    client_secret: apiSecret,
+    refresh_token: refreshToken,
+  });
+
+  return parseOfflineTokenResponse(data);
+}
+
+export async function cycleToExpiringOfflineToken(
+  shopDomain: string,
+  offlineAccessToken: string,
+): Promise<ShopifyOfflineTokenSet> {
+  const { apiKey, apiSecret } = getShopifyConfig();
+
+  const data = await postTokenRequest(shopDomain, {
+    grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
+    client_id: apiKey,
+    client_secret: apiSecret,
+    subject_token: offlineAccessToken,
+    subject_token_type:
+      "urn:shopify:params:oauth:token-type:offline-access-token",
+    requested_token_type:
+      "urn:shopify:params:oauth:token-type:offline-access-token",
+    expiring: "1",
+  });
+
+  return parseOfflineTokenResponse(data);
 }

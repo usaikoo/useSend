@@ -1,0 +1,21 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "8ef9a3fdf5f50457e29279b5d8d1c1bc"
+name = "Rioreply - Ai agent marketing"
+application_url = "https://app.rioreply.app"
+embedded = true
+
+[webhooks]
+api_version = "2026-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_orders,read_products,read_content"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://rioreply.app/api/shopify/callback",
+  "https://app.rioreply.app/api/shopify/callback"
+]

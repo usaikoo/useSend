@@ -2,6 +2,7 @@ import { ShopifySyncStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { db } from "~/server/db";
 import { ShopifyClient } from "~/server/shopify/client";
+import { ShopifyTokenService } from "~/server/service/shopify-token-service";
 import {
   SHOPIFY_PRODUCT_WEBHOOK_TOPICS,
   SHOPIFY_PROTECTED_WEBHOOK_TOPICS,
@@ -41,10 +42,6 @@ export class ShopifySyncService {
     return store;
   }
 
-  static getClient(store: { shopDomain: string; accessToken: string }) {
-    return new ShopifyClient(store.shopDomain, store.accessToken);
-  }
-
   static async registerWebhooks(storeId: string) {
     const store = await db.shopifyStore.findUnique({ where: { id: storeId } });
     if (!store) {
@@ -53,7 +50,7 @@ export class ShopifySyncService {
 
     const { appUrl } = getShopifyConfig();
     const webhookUrl = `${appUrl.replace(/\/$/, "")}/api/webhook/shopify`;
-    const client = this.getClient(store);
+    const client = await ShopifyTokenService.getClientForStore(storeId);
     const existing = await client.listWebhooks();
     const existingTopics = new Set(existing.map((webhook) => webhook.topic));
 
@@ -87,28 +84,28 @@ export class ShopifySyncService {
     let customerDataNote: string | null = null;
 
     try {
-      const client = this.getClient(store);
+      await ShopifyTokenService.withClient(store.id, async (client) => {
+        await this.syncProducts(store.id, store.shopDomain, client);
 
-      await this.syncProducts(store.id, store.shopDomain, client);
-
-      if (isCustomerDataSyncEnabled()) {
-        try {
-          await this.syncCustomers(store.id, client);
-          await this.syncOrders(store.id, client);
-        } catch (error) {
-          if (isProtectedCustomerDataError(error)) {
-            customerDataNote = PROTECTED_CUSTOMER_DATA_MESSAGE;
-            logger.warn(
-              { storeId },
-              "Shopify protected customer data not approved; skipping customers and orders",
-            );
-          } else {
-            throw error;
+        if (isCustomerDataSyncEnabled()) {
+          try {
+            await this.syncCustomers(store.id, client);
+            await this.syncOrders(store.id, client);
+          } catch (error) {
+            if (isProtectedCustomerDataError(error)) {
+              customerDataNote = PROTECTED_CUSTOMER_DATA_MESSAGE;
+              logger.warn(
+                { storeId },
+                "Shopify protected customer data not approved; skipping customers and orders",
+              );
+            } else {
+              throw error;
+            }
           }
+        } else {
+          customerDataNote = PROTECTED_CUSTOMER_DATA_MESSAGE;
         }
-      } else {
-        customerDataNote = PROTECTED_CUSTOMER_DATA_MESSAGE;
-      }
+      });
 
       await this.registerWebhooks(store.id);
 
@@ -282,7 +279,7 @@ export class ShopifySyncService {
       return;
     }
 
-    const client = this.getClient(store);
+    const client = await ShopifyTokenService.getClientForStore(store.id);
     const isProtectedTopic = SHOPIFY_PROTECTED_WEBHOOK_TOPICS.includes(
       topic as (typeof SHOPIFY_PROTECTED_WEBHOOK_TOPICS)[number],
     );
