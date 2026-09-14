@@ -1,27 +1,18 @@
-import Image from "next/image";
 import Link from "next/link";
 import { SiteFooter } from "~/components/SiteFooter";
-import { GitHubStarsButton } from "~/components/GitHubStarsButton";
 import { Button } from "@usesend/ui/src/button";
 import { TopNav } from "~/components/TopNav";
-import { FeatureCard } from "~/components/FeatureCard";
 import { FeatureCardPlain } from "~/components/FeatureCardPlain";
-import { PricingCalculator } from "~/components/PricingCalculator";
-import CodeExample from "~/components/CodeExample";
-import { Avatar, AvatarFallback, AvatarImage } from "@usesend/ui/src/avatar";
+import { APP_NAME } from "~/lib/brand";
 import { APP_SIGNUP_URL } from "~/lib/site-config";
-
-const REPO = "usesend/usesend";
-const REPO_URL = `https://github.com/${REPO}`;
 
 export default function Page() {
   return (
-    <main className="min-h-screen  text-foreground bg-background">
+    <main className="min-h-screen text-foreground bg-background">
       <TopNav />
       <Hero />
-      <TrustedBy />
+      <HowItWorks />
       <Features />
-      <CodeExample />
       <Pricing />
       <About />
       <SiteFooter />
@@ -29,111 +20,40 @@ export default function Page() {
   );
 }
 
-// (Removed unused SectionHeading component)
-
 function Hero() {
   return (
     <section>
       <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
-        <h1 className="mt-6 text-center text-2xl sm:text-4xl font-semibold text-primary font-sans">
-          The open source email platform for everyone
+        <p className="text-center text-sm uppercase tracking-[0.2em] text-primary">
+          AI marketing autopilot for Shopify
+        </p>
+        <h1 className="mt-4 text-center text-3xl sm:text-5xl font-semibold text-primary font-sans max-w-3xl mx-auto leading-tight">
+          Connect Shopify. Let AI handle your marketing.
         </h1>
-        <p className="mt-4 text-center text-base sm:text-lg  font-sans max-w-2xl mx-auto">
-          Send product, transactional and marketing emails.{" "}
-          <span className="text-primary font-normal">
-            Pay only for what you send
-          </span>{" "}
-          and not for storing contacts.
+        <p className="mt-5 text-center text-base sm:text-lg font-sans max-w-2xl mx-auto text-muted-foreground">
+          {APP_NAME} analyzes products, customer behavior, and storefront
+          activity to decide when personalized emails should go out — so you
+          don&apos;t have to build complex automations yourself.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button size="lg" className="px-6">
-            <a href={APP_SIGNUP_URL}>Get started</a>
+            <a href={APP_SIGNUP_URL}>Start free</a>
           </Button>
-
-          <GitHubStarsButton />
+          <Button size="lg" variant="outline" className="px-6">
+            <a href="#how-it-works">See how it works</a>
+          </Button>
         </div>
 
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          Open source • Self-host in minutes • Free tier
+          Built for Shopify merchants • One-click app embed • Free plan available
         </p>
 
-        <div className="mt-12 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-4">
-          <p className="text-xs">Proudly sponsored by</p>
-          <div className="flex flex-col items-center gap-2">
-            <a
-              href="https://coderabbit.ai/?utm_source=useSend.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="/code-rabbit-usesend-dark.svg"
-                alt="Code Rabbit"
-                width={200}
-                height={100}
-                className="dark:hidden"
-              />
-              <Image
-                src="/code-rabbit-usesend-light.svg"
-                alt="Code Rabbit"
-                width={200}
-                height={100}
-                className="hidden dark:block"
-              />
-            </a>
-          </div>
-
-          <div className="flex flex-col items-center gap-2 mt-4">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground/80">
-              Bronze sponsor
-            </p>
-            <a
-              href="https://sayr.io/?utm_source=useSend.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Image
-                src="https://cdn.doras.to/Sayr/sayr%20black.png"
-                alt="Sayr"
-                width={80}
-                height={32}
-                className="h-8 w-auto dark:hidden"
-              />
-              <Image
-                src="https://cdn.doras.to/Sayr/Sayr%20white.png"
-                alt="Sayr"
-                width={80}
-                height={32}
-                className="hidden h-8 w-auto dark:block"
-              />
-            </a>
-          </div>
-        </div>
-
-        <div className=" mt-32 mx-auto max-w-5xl">
-          <div className="rounded-[18px] bg-primary/10 p-1 sm:p-1 ">
-            <div className="rounded-2xl bg-primary/20 p-1 sm:p-1 ">
-              <Image
-                src="/hero-light.webp"
-                alt="useSend product hero"
-                width={3456}
-                height={1914}
-                className="w-full h-auto rounded-xl block dark:hidden"
-                sizes="(min-width: 1024px) 900px, 100vw"
-                loading="eager"
-                priority={false}
-              />
-              <Image
-                src="/hero-dark.webp"
-                alt="useSend product hero"
-                width={3456}
-                height={1914}
-                className="w-full h-auto rounded-xl hidden dark:block"
-                sizes="(min-width: 1024px) 900px, 100vw"
-                loading="eager"
-                priority={false}
-              />
-            </div>
+        <div className="mt-16 mx-auto max-w-4xl rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
+            <HeroStat label="Connect" value="OAuth in minutes" />
+            <HeroStat label="Track" value="Storefront behavior" />
+            <HeroStat label="Send" value="AI-timed emails" />
           </div>
         </div>
       </div>
@@ -141,123 +61,70 @@ function Hero() {
   );
 }
 
-// TopNav moved to a dedicated client component in ~/components/TopNav
+function HeroStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wider text-primary">{label}</p>
+      <p className="mt-1 text-sm sm:text-base font-medium">{value}</p>
+    </div>
+  );
+}
 
-function TrustedBy() {
-  const featured = [
+function HowItWorks() {
+  const steps = [
     {
-      quote:
-        "Transitioned recently to open source email sender useSend for our 30k and growing newsletter. It's such a great product and amazing oss experience.",
-      author: "Marc Seitz",
-      company: "papermark.com",
-      image:
-        "https://pbs.twimg.com/profile_images/1176854646343852032/iYnUXJ-m_400x400.jpg",
+      step: "1",
+      title: "Connect your Shopify store",
+      content:
+        "Install RioReply from the Shopify App Store and connect your store. Products sync automatically so RioReply understands your catalog.",
     },
     {
-      quote:
-        "useSend was extremely easy to set up, and I love that it's open source. Koushik has been an absolute awesome person to deal with and helps us with any issues or feedback.",
-      author: "Tommerty",
-      company: "doras.to",
-      image:
-        "https://cdn.doras.to/doras/user/83bda65b-8d42-4011-9bf0-ab23402776f2-0.890688178917765.webp",
-    },
-  ];
-
-  const quick = [
-    {
-      quote: "don't sleep on useSend",
-      author: "shellscape",
-      company: "jsx.email",
-      image:
-        "https://pbs.twimg.com/profile_images/1698447401781022720/b0DZSc_D_400x400.jpg",
+      step: "2",
+      title: "Enable storefront tracking",
+      content:
+        "Turn on the RioReply app embed in your theme editor. Page views, product views, and add-to-cart events flow in within seconds.",
     },
     {
-      quote: "Thank you for making useSend!",
-      author: "Andras Bacsai",
-      company: "coolify.io",
-      image:
-        "https://pbs.twimg.com/profile_images/1884210412524027905/jW4NB4rx_400x400.jpg",
+      step: "3",
+      title: "AI detects product interest",
+      content:
+        "RioReply watches for meaningful behavior — like a visitor viewing the same product multiple times — and evaluates whether outreach makes sense.",
     },
     {
-      quote: "I KNOW WHAT TO DO",
-      author: "VicVijayakumar",
-      company: "onetimefax.com",
-      image:
-        "https://pbs.twimg.com/profile_images/1665351804685524995/W4BpDx5Z_400x400.jpg",
+      step: "4",
+      title: "Personalized emails go out",
+      content:
+        "When the rules allow it, RioReply sends a tailored reminder email from your domain, respecting consent and avoiding spammy blast campaigns.",
     },
   ];
 
   return (
-    <section className="py-10 sm:py-20 ">
+    <section id="how-it-works" className="py-16 sm:py-20 border-t border-border">
       <div className="mx-auto max-w-6xl px-6">
-        <div className="text-center tracking-wider text-muted-foreground">
-          <span className="">Builders and open source teams love </span>
-          <span className="text-primary font-bold">useSend</span>
+        <div className="text-center">
+          <div className="mb-2 text-sm uppercase tracking-wider text-primary">
+            How it works
+          </div>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            RioReply is not a drag-and-drop automation builder. It is an AI
+            agent that decides what marketing action to take next.
+          </p>
         </div>
 
-        {/* Top: 2 larger testimonials */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {featured.map((t) => (
-            <figure
-              key={t.author + t.company}
-              className="rounded-xl border border-primary/30 p-5 h-full"
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {steps.map((item) => (
+            <div
+              key={item.step}
+              className="rounded-xl border border-primary/20 p-6 bg-background"
             >
-              <blockquote className="text-sm sm:text-base font-light font-sans ">
-                {t.quote}
-              </blockquote>
-              <div className="mt-5 flex items-center gap-3">
-                <Avatar className="rounded-lg border-2 border-primary/50 h-8 w-8">
-                  <AvatarImage src={t.image} alt={`${t.author} avatar`} />
-                  <AvatarFallback className="rounded-lg text-xs">
-                    {t.author.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <figcaption className="text-sm">
-                  <span className="font-medium">{t.author}</span>
-                  <a
-                    href={`https://${t.company}`}
-                    target="_blank"
-                    className="text-muted-foreground hover:text-primary-light"
-                  >
-                    {" "}
-                    — {t.company}
-                  </a>{" "}
-                </figcaption>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                {item.step}
               </div>
-            </figure>
-          ))}
-        </div>
-
-        {/* Bottom: 3 multi-line testimonials (same style as top) */}
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {quick.map((t) => (
-            <figure
-              key={t.author + t.company}
-              className="rounded-xl border border-primary/30 p-5 h-full"
-            >
-              <blockquote className="text-sm sm:text-base font-light font-sans leading-relaxed">
-                {t.quote}
-              </blockquote>
-              <div className="mt-5 flex items-center gap-3">
-                <Avatar className="rounded-lg border-2 border-primary/50 h-8 w-8">
-                  <AvatarImage src={t.image} alt={`${t.author} avatar`} />
-                  <AvatarFallback className="rounded-lg text-xs">
-                    {t.author.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <figcaption className="text-sm">
-                  <span className="font-medium">{t.author}</span>
-                  <a
-                    href={`https://${t.company}`}
-                    target="_blank"
-                    className="text-muted-foreground hover:text-primary-light"
-                  >
-                    {" "}
-                    — {t.company}
-                  </a>
-                </figcaption>
-              </div>
-            </figure>
+              <h3 className="mt-4 text-lg font-medium">{item.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                {item.content}
+              </p>
+            </div>
           ))}
         </div>
       </div>
@@ -266,45 +133,42 @@ function TrustedBy() {
 }
 
 function Features() {
-  // Top: 2 cards (with image area) — Analytics, Editor
-  const top = [
+  const features = [
     {
-      key: "feature-analytics",
-      title: "Analytics",
+      key: "shopify-native",
+      title: "Shopify-native setup",
       content:
-        "Track deliveries, opens, clicks, bounces and unsubscribes in real time with a simple, searchable log. Filter by domain, status, api key and export them. Track which campaigns perform best.",
-      imageLightSrc: "/emails-search-light.webp",
-      imageDarkSrc: "/emails-search-dark.webp",
+        "OAuth connect, product sync, and a theme app embed — no manual theme.liquid editing required for tracking.",
     },
     {
-      key: "feature-editor",
-      title: "Marketing Email Editor",
+      key: "storefront-tracking",
+      title: "Storefront behavior tracking",
       content:
-        "Design beautiful campaigns without code using a visual, notion like WYSIWYG editor that works in major email clients. Reuse templates and brand styles, and personalize with variables.",
-      imageLightSrc: "/editor-light.webp",
-      imageDarkSrc: "/editor-dark.webp",
-    },
-  ];
-
-  // Bottom: 3 cards (no images) — Contact Management, Suppression List, SMTP Relay Service
-  const bottom = [
-    {
-      key: "feature-contacts",
-      title: "Contact Management",
-      content:
-        "Manage contacts, lists, and consent in one place. Import and export easily, keep per-list subscription status. Contacts are automatically updated from bounces and complaints.",
+        "Capture page views, product views, add to cart, checkout, and purchase signals from your live storefront.",
     },
     {
-      key: "feature-suppression",
-      title: "Suppression List",
+      key: "product-interest",
+      title: "Product interest detection",
       content:
-        "Prevent accidental sends. Automatically populated from bounces and complaints, and manage via import/export or API. Works with transactional and marketing emails.",
+        "RioReply flags when a visitor shows repeated interest in a product, a strong signal for a timely follow-up email.",
     },
     {
-      key: "feature-smtp",
-      title: "SMTP Relay",
+      key: "ai-autopilot",
+      title: "AI marketing autopilot",
       content:
-        "Drop-in SMTP relay that works with any app or framework. Do not get vendor lock-in. Comes in handy with services like Supabase",
+        "Enable product-interest emails and RioReply evaluates opportunities on a schedule — you stay in control of sender settings.",
+    },
+    {
+      key: "consent-aware",
+      title: "Consent-aware sending",
+      content:
+        "Built to respect Shopify customer marketing consent and frequency limits as customer data access is approved.",
+    },
+    {
+      key: "action-log",
+      title: "Transparent action log",
+      content:
+        "Every RioReply decision is logged with status, explanation, and recipient — so you always know what the AI did and why.",
     },
   ];
 
@@ -315,25 +179,19 @@ function Features() {
           <div className="mb-2 text-sm uppercase tracking-wider text-primary">
             Features
           </div>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Everything RioReply needs to understand your store and act on
+            marketing opportunities.
+          </p>
         </div>
 
-        {/* Top row: 2 side-by-side cards with images */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {top.map((f) => (
-            <FeatureCard
-              key={f.key}
-              title={f.title}
-              content={f.content}
-              imageLightSrc={f.imageLightSrc}
-              imageDarkSrc={f.imageDarkSrc}
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature) => (
+            <FeatureCardPlain
+              key={feature.key}
+              title={feature.title}
+              content={feature.content}
             />
-          ))}
-        </div>
-
-        {/* Bottom row: 3 cards without images */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {bottom.map((f) => (
-            <FeatureCardPlain key={f.key} title={f.title} content={f.content} />
           ))}
         </div>
       </div>
@@ -341,55 +199,49 @@ function Features() {
   );
 }
 
-// CodeExample moved to a dedicated client component in ~/components/CodeExample
-
 function Pricing() {
-  const freePerks = [
-    "Send up to 3000 emails per month",
-    "Send up to 100 emails per day",
-    "Can have 1 contact book",
-    "Can have 1 domain",
-    "Can have 1 team member",
-  ];
-
-  const paidPerks = [
-    "$10 monthly usage credits",
-    "Send transactional emails at $0.0004 per email",
-    "Send marketing emails at $0.001 per email",
-    "Can have unlimited contact books",
-    "Can have unlimited domains",
-    "Can have unlimited team members",
-  ];
-
   return (
-    <section id="pricing" className="py-16 sm:py-20">
+    <section id="pricing" className="py-16 sm:py-20 border-t border-border">
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <div className="mb-2 text-sm uppercase tracking-wider text-primary">
-            PRICING
+            Pricing
           </div>
-          <p className="mt-1 text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
-            pay for what you use, the most affordable email platform
+          <p className="mt-1 text-sm text-muted-foreground max-w-2xl mx-auto">
+            Start free while RioReply is in beta. Upgrade when you need more
+            automation volume.
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <PricingCard
             title="Free"
             price="$0"
             note="per month"
-            perks={freePerks}
+            perks={[
+              "Connect 1 Shopify store",
+              "Product sync & storefront tracking",
+              "App embed install in theme editor",
+              "Product interest detection",
+              "AI marketing autopilot (limited)",
+            ]}
+            cta="Start free"
+            highlighted
           />
           <PricingCard
-            title="Paid"
-            price="$10"
-            note="minimum usage per month"
-            perks={paidPerks}
+            title="Pro"
+            price="$29"
+            note="coming soon"
+            perks={[
+              "Everything in Free",
+              "Higher email send volume",
+              "Advanced lifecycle campaigns",
+              "Priority support",
+              "Shopify Billing integration",
+            ]}
+            cta="Join waitlist"
+            disabled
           />
-        </div>
-
-        <div className="mt-8">
-          <PricingCalculator />
         </div>
       </div>
     </section>
@@ -401,29 +253,46 @@ type PricingCardProps = {
   price: string;
   note: string;
   perks: string[];
+  cta: string;
+  highlighted?: boolean;
+  disabled?: boolean;
 };
 
-function PricingCard({ title, price, note, perks }: PricingCardProps) {
+function PricingCard({
+  title,
+  price,
+  note,
+  perks,
+  cta,
+  highlighted = false,
+  disabled = false,
+}: PricingCardProps) {
   return (
-    <div className="rounded-[18px] bg-primary/20 p-1">
-      <div className="h-full rounded-[14px] bg-primary/20 p-0.5 shadow-sm">
-        <div className="bg-background rounded-xl h-full flex flex-col p-5">
-          <h3 className=" font-medium">{title}</h3>
-          <div className="mt-2 text-4xl text-primary">{price}</div>
-          <div className="text-xs text-muted-foreground">{note}</div>
-          <ul className="mt-4 space-y-2 text-sm mb-20">
-            {perks.map((perk) => (
-              <li key={perk} className="flex items-start gap-2">
-                <CheckIcon className="w-4 h-4 mt-0.5 text-primary" />
-                <span>{perk}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-auto pt-6">
-            <Button className="">
-              <a href={APP_SIGNUP_URL}>Get started</a>
+    <div
+      className={`rounded-[18px] p-1 ${highlighted ? "bg-primary/20" : "bg-muted/40"}`}
+    >
+      <div className="h-full rounded-xl bg-background flex flex-col p-6 border border-border">
+        <h3 className="font-medium">{title}</h3>
+        <div className="mt-2 text-4xl text-primary">{price}</div>
+        <div className="text-xs text-muted-foreground">{note}</div>
+        <ul className="mt-5 space-y-2 text-sm flex-1">
+          {perks.map((perk) => (
+            <li key={perk} className="flex items-start gap-2">
+              <CheckIcon className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+              <span>{perk}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6">
+          {disabled ? (
+            <Button variant="outline" className="w-full" disabled>
+              {cta}
             </Button>
-          </div>
+          ) : (
+            <Button className="w-full">
+              <a href={APP_SIGNUP_URL}>{cta}</a>
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -436,27 +305,36 @@ function About() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <div className="mb-2 text-sm uppercase tracking-wider text-primary">
-            About
+            About {APP_NAME}
           </div>
         </div>
 
-        <div className="mt-8 max-w-3xl mx-auto text-sm sm:text-base space-y-4">
+        <div className="mt-8 max-w-3xl mx-auto text-sm sm:text-base space-y-4 text-muted-foreground">
           <p>
-            As most of email products out there, useSend also uses Amazon SES
-            under the hood to send emails. We provide an open and alternative
-            way to send emails reliably and cheaply with a great dashboard.
+            Most Shopify merchants know they should send more marketing emails,
+            but they don&apos;t have time to constantly analyze behavior, write
+            copy, and tune automations. RioReply takes a different approach: an
+            AI agent that watches your store and acts when it makes sense.
           </p>
           <p>
-            useSend is bootstrapped and funded by the cloud offering and
-            sponsors. If you self host useSend, please consider{" "}
+            RioReply is built on a reliable email infrastructure stack, but it
+            is not a generic email builder. The product is designed around
+            Shopify data, storefront events, and merchant-friendly defaults —
+            connect your store, enable tracking, and let RioReply handle the
+            rest.
+          </p>
+          <p>
+            Questions or partnership inquiries?{" "}
             <a
-              href="https://github.com/sponsors/KMKoushik"
-              target="_blank"
-              className="text-primary-light"
+              href="mailto:privacy@rioreply.app"
+              className="text-primary hover:underline"
             >
-              sponsoring us
+              privacy@rioreply.app
             </a>
-            .
+            {" · "}
+            <Link href="/privacy" className="text-primary hover:underline">
+              Privacy policy
+            </Link>
           </p>
         </div>
       </div>
@@ -464,11 +342,6 @@ function About() {
   );
 }
 
-// FAQ section removed per request
-
-// Footer moved to ~/components/SiteFooter
-
-// Minimal inline icons (stroke-based, sleek)
 function CheckIcon({ className = "" }: { className?: string }) {
   return (
     <svg
