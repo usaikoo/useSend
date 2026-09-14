@@ -2,10 +2,26 @@ import { TRPCError } from "@trpc/server";
 import { subMinutes } from "date-fns";
 import { db } from "~/server/db";
 
-export const DEMO_VISITOR_ID = "rioreply-demo-visitor";
-export const DEMO_SESSION_ID = "rioreply-demo-session";
+export const DEMO_VISITOR_ID_PREFIX = "rioreply-demo-visitor";
+export const DEMO_SESSION_ID_PREFIX = "rioreply-demo-session";
 export const DEMO_CUSTOMER_SHOPIFY_ID = "rioreply-demo-customer";
 export const DEMO_ORDER_SHOPIFY_ID = "rioreply-demo-order";
+
+/** @deprecated Use createDemoVisitorId() for fresh test runs */
+export const DEMO_VISITOR_ID = `${DEMO_VISITOR_ID_PREFIX}-legacy`;
+export const DEMO_SESSION_ID = `${DEMO_SESSION_ID_PREFIX}-legacy`;
+
+function createDemoScopedId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function createDemoVisitorId() {
+  return createDemoScopedId(DEMO_VISITOR_ID_PREFIX);
+}
+
+export function createDemoSessionId() {
+  return createDemoScopedId(DEMO_SESSION_ID_PREFIX);
+}
 
 export type SeedDemoDataInput = {
   storeId: string;
@@ -14,6 +30,7 @@ export type SeedDemoDataInput = {
 
 export type SeedDemoDataResult = {
   recipientEmail: string;
+  visitorId: string;
   productTitle: string;
   productViewsCreated: number;
   customerCount: number;
@@ -119,36 +136,18 @@ export class ShopifyDemoDataService {
       },
     });
 
-    await db.shopifyVisitorProfile.upsert({
-      where: {
-        storeId_visitorId: {
-          storeId: store.id,
-          visitorId: DEMO_VISITOR_ID,
-        },
-      },
-      create: {
-        storeId: store.id,
-        visitorId: DEMO_VISITOR_ID,
-        email: input.recipientEmail.toLowerCase(),
-        shopifyCustomerId: DEMO_CUSTOMER_SHOPIFY_ID,
-        firstName: "Demo",
-        lastName: "Shopper",
-        emailMarketingConsent: true,
-      },
-      update: {
-        email: input.recipientEmail.toLowerCase(),
-        shopifyCustomerId: DEMO_CUSTOMER_SHOPIFY_ID,
-        firstName: "Demo",
-        lastName: "Shopper",
-        emailMarketingConsent: true,
-        lastMarketingEmailAt: null,
-      },
-    });
+    const visitorId = createDemoVisitorId();
+    const sessionId = createDemoSessionId();
 
-    await db.shopifyStorefrontEvent.deleteMany({
-      where: {
+    await db.shopifyVisitorProfile.create({
+      data: {
         storeId: store.id,
-        visitorId: DEMO_VISITOR_ID,
+        visitorId,
+        email: input.recipientEmail.toLowerCase(),
+        shopifyCustomerId: DEMO_CUSTOMER_SHOPIFY_ID,
+        firstName: "Demo",
+        lastName: "Shopper",
+        emailMarketingConsent: true,
       },
     });
 
@@ -158,8 +157,8 @@ export class ShopifyDemoDataService {
     await db.shopifyStorefrontEvent.createMany({
       data: viewTimes.map((minutesAgo) => ({
         storeId: store.id,
-        sessionId: DEMO_SESSION_ID,
-        visitorId: DEMO_VISITOR_ID,
+        sessionId,
+        visitorId,
         eventType: "PRODUCT_VIEW" as const,
         path: product.handle ? `/products/${product.handle}` : "/products/demo",
         productId: product.shopifyId,
@@ -172,8 +171,8 @@ export class ShopifyDemoDataService {
     await db.shopifyStorefrontEvent.create({
       data: {
         storeId: store.id,
-        sessionId: DEMO_SESSION_ID,
-        visitorId: DEMO_VISITOR_ID,
+        sessionId,
+        visitorId,
         eventType: "PAGE_VIEW",
         path: "/",
         occurredAt: subMinutes(new Date(), 50),
@@ -196,6 +195,7 @@ export class ShopifyDemoDataService {
 
     return {
       recipientEmail: input.recipientEmail.toLowerCase(),
+      visitorId,
       productTitle: product.title,
       productViewsCreated,
       customerCount,

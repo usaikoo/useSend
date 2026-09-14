@@ -176,7 +176,7 @@ export default function ShopifySettingsPage() {
         apiUtils.shopify.getRioReplyActions.invalidate(),
       ]);
       setMessage(
-        `Demo data ready for ${result.recipientEmail}: ${result.productViewsCreated} product views on "${result.productTitle}". Enable autopilot and click Run now to send a test email.`,
+        `Fresh demo shopper ready (${result.visitorId}): ${result.productViewsCreated} product views on "${result.productTitle}". Enable autopilot and click Run now.`,
       );
     } catch (error) {
       console.error("Failed to seed demo data:", error);
