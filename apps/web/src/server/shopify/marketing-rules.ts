@@ -90,7 +90,7 @@ export function buildSkipExplanation(reason: string) {
     case "FREQUENCY_LIMIT":
       return "This visitor has received too many marketing emails recently.";
     case "COOLDOWN_ACTIVE":
-      return "RioReply recently contacted this visitor about this product.";
+      return "RioReply recently sent this visitor a marketing email about this product.";
     default:
       return "RioReply decided not to send an email.";
   }

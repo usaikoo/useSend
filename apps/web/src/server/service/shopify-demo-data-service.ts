@@ -139,6 +139,16 @@ export class ShopifyDemoDataService {
     const visitorId = createDemoVisitorId();
     const sessionId = createDemoSessionId();
 
+    await db.rioReplyAction.deleteMany({
+      where: {
+        storeId: store.id,
+        OR: [
+          { visitorId: { startsWith: DEMO_VISITOR_ID_PREFIX } },
+          { recipientEmail: input.recipientEmail.toLowerCase() },
+        ],
+      },
+    });
+
     await db.shopifyVisitorProfile.create({
       data: {
         storeId: store.id,

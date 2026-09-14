@@ -160,6 +160,7 @@ export class ShopifyProductInterestService {
         storeId: input.storeId,
         visitorId: input.visitorId,
         shopifyProductId: input.shopifyProductId,
+        status: "SENT",
         createdAt: { gte: cooldownSince },
       },
     });
