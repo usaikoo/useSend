@@ -67,14 +67,23 @@ export default function TeamMembersList() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-center w-[100px] rounded capitalize py-1 text-xs bg-green/15 text-green border border-green/25">
-                      Active
+                    <div className="flex flex-col gap-1">
+                      <div className="text-center w-[100px] rounded capitalize py-1 text-xs bg-green/15 text-green border border-green/25">
+                        Active
+                      </div>
+                      {member.user && member.user.hasPasswordLogin ? (
+                        <div className="text-center w-[100px] rounded py-1 text-xs bg-muted text-muted-foreground border">
+                          Password login
+                        </div>
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {formatDistanceToNow(new Date(member.user.createdAt), {
-                      addSuffix: true,
-                    })}
+                    {member.user
+                      ? formatDistanceToNow(new Date(member.user.createdAt), {
+                          addSuffix: true,
+                        })
+                      : "—"}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">

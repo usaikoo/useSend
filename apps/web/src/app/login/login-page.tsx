@@ -36,6 +36,15 @@ const emailSchema = z.object({
     .email({ message: "Invalid email" }),
 });
 
+const passwordLoginSchema = z.object({
+  email: z
+    .string({ required_error: "Email is required" })
+    .email({ message: "Invalid email" }),
+  password: z
+    .string({ required_error: "Password is required" })
+    .min(8, { message: "Password must be at least 8 characters" }),
+});
+
 const otpSchema = z.object({
   otp: z
     .string({ required_error: "OTP is required" })
@@ -73,14 +82,53 @@ export default function LoginPage({
   const [emailStatus, setEmailStatus] = useState<
     "idle" | "sending" | "success"
   >("idle");
+  const [passwordStatus, setPasswordStatus] = useState<
+    "idle" | "submitting"
+  >("idle");
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
   });
 
+  const passwordForm = useForm<z.infer<typeof passwordLoginSchema>>({
+    resolver: zodResolver(passwordLoginSchema),
+  });
+
   const otpForm = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
   });
+
+  async function onPasswordSubmit(values: z.infer<typeof passwordLoginSchema>) {
+    setPasswordStatus("submitting");
+    passwordForm.clearErrors();
+
+    try {
+      const result = await signIn("credentials", {
+        email: values.email.toLowerCase(),
+        password: values.password,
+        redirect: false,
+        callbackUrl: getCallbackUrl(),
+      });
+
+      if (!result || result.error) {
+        setPasswordStatus("idle");
+        passwordForm.setError("password", {
+          type: "server",
+          message:
+            getAuthErrorMessage(result?.error) ?? GENERIC_AUTH_ERROR_MESSAGE,
+        });
+        return;
+      }
+
+      window.location.href = result.url ?? getCallbackUrl();
+    } catch {
+      setPasswordStatus("idle");
+      passwordForm.setError("password", {
+        type: "server",
+        message: GENERIC_AUTH_ERROR_MESSAGE,
+      });
+    }
+  }
 
   async function onEmailSubmit(values: z.infer<typeof emailSchema>) {
     setEmailStatus("sending");
@@ -215,6 +263,67 @@ export default function LoginPage({
                 </Button>
               );
             })}
+          <>
+            <div className=" flex w-[350px]  items-center justify-between gap-2">
+              <p className=" z-10 ml-[175px] -translate-x-1/2 bg-background px-4 text-sm">
+                or
+              </p>
+              <div className="absolute h-[1px] w-[350px]  bg-gradient-to-l from-zinc-300 via-zinc-800 to-zinc-300"></div>
+            </div>
+
+            <Form {...passwordForm}>
+              <form
+                onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+                className="space-y-4 w-[350px]"
+              >
+                <p className="text-sm text-center text-muted-foreground">
+                  Sign in with email and password
+                </p>
+                <FormField
+                  control={passwordForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          placeholder="Email"
+                          type="email"
+                          autoComplete="username"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={passwordForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          placeholder="Password"
+                          type="password"
+                          autoComplete="current-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  className="w-full"
+                  size="lg"
+                  disabled={passwordStatus === "submitting"}
+                >
+                  {passwordStatus === "submitting" ? "Signing in..." : "Sign in"}
+                </Button>
+              </form>
+            </Form>
+          </>
+
           {emailProvider && (
             <>
               <div className=" flex w-[350px]  items-center justify-between gap-2">

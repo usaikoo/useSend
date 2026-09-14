@@ -9,11 +9,13 @@ import { type Adapter, type AdapterUser } from "next-auth/adapters";
 import GitHubProvider from "next-auth/providers/github";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { Provider } from "next-auth/providers/index";
 
 import { sendSignUpEmail } from "~/server/mailer";
 import { env } from "~/env";
 import { db } from "~/server/db";
+import { PasswordService } from "~/server/service/password-service";
 import { TeamService } from "~/server/service/team-service";
 
 const GITHUB_OAUTH_ISSUER = "https://github.com/login/oauth";
@@ -154,6 +156,48 @@ function getProviders() {
     );
   }
 
+  providers.push(
+    CredentialsProvider({
+      id: "credentials",
+      name: "Email and Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email?.trim().toLowerCase();
+        const password = credentials?.password;
+
+        if (!email || !password) {
+          return null;
+        }
+
+        const user = await db.user.findUnique({
+          where: { email },
+        });
+
+        if (!user?.passwordHash) {
+          return null;
+        }
+
+        const isValid = await PasswordService.verify(password, user.passwordHash);
+
+        if (!isValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isBetaUser: user.isBetaUser,
+          isWaitlisted: user.isWaitlisted,
+          isAdmin: user.email === env.ADMIN_EMAIL,
+        };
+      },
+    }),
+  );
+
   if (env.FROM_EMAIL) {
     providers.push(
       EmailProvider({
@@ -181,17 +225,36 @@ function getProviders() {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
-    signIn: async ({ user, account }) =>
-      canRegisterSelfHostedUser(user.email, account),
-    session: ({ session, user }) => ({
+    signIn: async ({ user, account }) => {
+      if (account?.provider === "credentials") {
+        return true;
+      }
+
+      return canRegisterSelfHostedUser(user.email, account);
+    },
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+        token.isBetaUser = user.isBetaUser;
+        token.isWaitlisted = user.isWaitlisted;
+        token.isAdmin = user.isAdmin;
+      }
+
+      return token;
+    },
+    session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: user.id,
-        isBetaUser: user.isBetaUser,
-        isAdmin: user.email === env.ADMIN_EMAIL,
-        isWaitlisted: user.isWaitlisted,
+        id: Number(token.id),
+        isBetaUser: Boolean(token.isBetaUser),
+        isAdmin:
+          Boolean(token.isAdmin) || session.user.email === env.ADMIN_EMAIL,
+        isWaitlisted: Boolean(token.isWaitlisted),
       },
     }),
   },

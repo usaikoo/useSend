@@ -45,6 +45,38 @@ export const teamRouter = createTRPCRouter({
       );
     }),
 
+  createPasswordMember: teamAdminProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        password: z.string().min(8),
+        role: z.enum(["MEMBER", "ADMIN"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return TeamService.createPasswordMember(
+        ctx.team.id,
+        input.email,
+        input.password,
+        input.role,
+      );
+    }),
+
+  setTeamMemberPassword: teamAdminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        password: z.string().min(8),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return TeamService.setTeamMemberPassword(
+        ctx.team.id,
+        Number(input.userId),
+        input.password,
+      );
+    }),
+
   updateTeamUserRole: teamAdminProcedure
     .input(
       z.object({

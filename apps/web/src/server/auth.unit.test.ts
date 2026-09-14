@@ -71,6 +71,16 @@ vi.mock("next-auth/providers/email", () => ({
   default: vi.fn((options) => ({ id: "email", options })),
 }));
 
+vi.mock("next-auth/providers/credentials", () => ({
+  default: vi.fn((options) => ({ id: "credentials", options })),
+}));
+
+vi.mock("~/server/service/password-service", () => ({
+  PasswordService: {
+    verify: vi.fn(),
+  },
+}));
+
 vi.mock("~/server/db", () => ({
   db: {
     account: {

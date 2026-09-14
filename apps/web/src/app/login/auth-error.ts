@@ -12,5 +12,9 @@ export function getAuthErrorMessage(error?: string | null) {
     return INVITATION_REQUIRED_MESSAGE;
   }
 
+  if (error === "CredentialsSignin") {
+    return "Invalid email or password.";
+  }
+
   return GENERIC_AUTH_ERROR_MESSAGE;
 }

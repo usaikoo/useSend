@@ -8,6 +8,7 @@ import { UnsendApiError } from "../public-api/api-error";
 import { getRedis, redisKey } from "~/server/redis";
 import { LimitReason } from "~/lib/constants/plans";
 import { LimitService } from "./limit-service";
+import { PasswordService } from "~/server/service/password-service";
 import { renderUsageLimitReachedEmail } from "../email-templates/UsageLimitReachedEmail";
 import { renderUsageWarningEmail } from "../email-templates/UsageWarningEmail";
 
@@ -130,14 +131,35 @@ export class TeamService {
   }
 
   static async getTeamUsers(teamId: number) {
-    return db.teamUser.findMany({
+    const teamUsers = await db.teamUser.findMany({
       where: {
         teamId,
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true,
+            passwordHash: true,
+          },
+        },
       },
     });
+
+    return teamUsers.map((teamUser) => ({
+      ...teamUser,
+      user: teamUser.user
+        ? {
+            id: teamUser.user.id,
+            name: teamUser.user.name,
+            email: teamUser.user.email,
+            createdAt: teamUser.user.createdAt,
+            hasPasswordLogin: Boolean(teamUser.user.passwordHash),
+          }
+        : null,
+    }));
   }
 
   static async getTeamInvites(teamId: number) {
@@ -201,6 +223,145 @@ export class TeamService {
     }
 
     return teamInvite;
+  }
+
+  static async createPasswordMember(
+    teamId: number,
+    email: string,
+    password: string,
+    role: "MEMBER" | "ADMIN",
+  ) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Email is required",
+      });
+    }
+
+    PasswordService.validatePassword(password);
+
+    const existingUser = await db.user.findUnique({
+      where: { email: normalizedEmail },
+      include: {
+        teamUsers: true,
+      },
+    });
+
+    const existingTeamUser = existingUser?.teamUsers.find(
+      (teamUser) => teamUser.teamId === teamId,
+    );
+
+    if (
+      existingUser &&
+      existingUser.teamUsers.length > 0 &&
+      !existingTeamUser
+    ) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "User already part of a team",
+      });
+    }
+
+    if (!existingTeamUser) {
+      const { isLimitReached } = await LimitService.checkTeamMemberLimit(teamId);
+
+      if (isLimitReached) {
+        throw new UnsendApiError({
+          code: "FORBIDDEN",
+          message: "Team invite limit reached",
+        });
+      }
+    }
+
+    const passwordHash = await PasswordService.hash(password);
+
+    const user =
+      existingUser ??
+      (await db.user.create({
+        data: {
+          email: normalizedEmail,
+          emailVerified: new Date(),
+          isBetaUser: env.NEXT_PUBLIC_IS_CLOUD,
+          isWaitlisted: false,
+          passwordHash,
+        },
+      }));
+
+    if (existingUser) {
+      await db.user.update({
+        where: { id: existingUser.id },
+        data: { passwordHash },
+      });
+    }
+
+    if (!existingTeamUser) {
+      await db.teamUser.create({
+        data: {
+          teamId,
+          userId: user.id,
+          role,
+        },
+      });
+    }
+
+    await db.teamInvite.deleteMany({
+      where: {
+        teamId,
+        email: normalizedEmail,
+      },
+    });
+
+    return {
+      userId: user.id,
+      email: normalizedEmail,
+      hasPasswordLogin: true,
+      created: !existingTeamUser,
+    };
+  }
+
+  static async setTeamMemberPassword(
+    teamId: number,
+    userId: number,
+    password: string,
+  ) {
+    PasswordService.validatePassword(password);
+
+    const teamUser = await db.teamUser.findFirst({
+      where: {
+        teamId,
+        userId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!teamUser?.user) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Team member not found",
+      });
+    }
+
+    await db.user.update({
+      where: { id: teamUser.user.id },
+      data: {
+        passwordHash: await PasswordService.hash(password),
+      },
+    });
+
+    return {
+      userId: teamUser.user.id,
+      email: teamUser.user.email,
+      hasPasswordLogin: true,
+    };
   }
 
   static async updateTeamUserRole(
