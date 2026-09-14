@@ -6,6 +6,13 @@ import { validateDomainFromEmail } from "~/server/service/domain-service";
 import type { GeneratedEmail } from "~/server/service/openai-email-service";
 
 export class ShopifyMarketingSendService {
+  private static async ensureAutopilotContactBook(contactBookId: string) {
+    return db.contactBook.update({
+      where: { id: contactBookId },
+      data: { doubleOptInEnabled: false },
+    });
+  }
+
   static async getOrCreateContactBook(teamId: number, storeId: string) {
     const settings = await db.shopifyMarketingSettings.findUnique({
       where: { storeId },
@@ -17,11 +24,21 @@ export class ShopifyMarketingSendService {
       });
 
       if (existing) {
+        if (existing.doubleOptInEnabled) {
+          return this.ensureAutopilotContactBook(existing.id);
+        }
+
         return existing;
       }
     }
 
-    const contactBook = await createContactBook(teamId, "RioReply Autopilot");
+    const contactBook = await createContactBook(
+      teamId,
+      "RioReply Autopilot",
+      undefined,
+      db,
+      { doubleOptInEnabled: false },
+    );
 
     await db.shopifyMarketingSettings.upsert({
       where: { storeId },
@@ -51,7 +68,7 @@ export class ShopifyMarketingSendService {
       input.storeId,
     );
 
-    const contact = await addOrUpdateContact(
+    let contact = await addOrUpdateContact(
       contactBook.id,
       {
         email: input.recipientEmail,
@@ -60,6 +77,16 @@ export class ShopifyMarketingSendService {
       },
       input.teamId,
     );
+
+    if (!contact.subscribed) {
+      contact = await db.contact.update({
+        where: { id: contact.id },
+        data: {
+          subscribed: true,
+          unsubscribeReason: null,
+        },
+      });
+    }
 
     const domain = await validateDomainFromEmail(input.fromEmail, input.teamId);
 

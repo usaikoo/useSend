@@ -46,6 +46,9 @@ export async function createContactBook(
   name: string,
   variables?: string[],
   client: ContactBookDbClient = db,
+  options?: {
+    doubleOptInEnabled?: boolean;
+  },
 ) {
   const { isLimitReached, reason } =
     await LimitService.checkContactBookLimit(teamId);
@@ -74,7 +77,7 @@ export async function createContactBook(
       teamId,
       properties: {},
       variables: normalizedVariables,
-      doubleOptInEnabled: true,
+      doubleOptInEnabled: options?.doubleOptInEnabled ?? true,
       doubleOptInSubject: DEFAULT_DOUBLE_OPT_IN_SUBJECT,
       doubleOptInContent: DEFAULT_DOUBLE_OPT_IN_CONTENT,
     },

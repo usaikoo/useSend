@@ -152,13 +152,48 @@ export default function ShopifySettingsPage() {
   const onRunMarketingNow = async () => {
     setMessage(null);
 
+    if (!marketingSettings?.enabled) {
+      setMessage(
+        "Autopilot is disabled. Click Enabled, save settings, then run again.",
+      );
+      return;
+    }
+
+    if (!fromEmail) {
+      setMessage("Set a verified sender email and save settings before running.");
+      return;
+    }
+
     try {
       const actions = await runMarketingNow.mutateAsync();
       await apiUtils.shopify.getRioReplyActions.invalidate();
-      setMessage(`RioReply evaluated ${actions.length} product interest opportunities.`);
+      await apiUtils.shopify.getMarketingSettings.invalidate();
+
+      const sentCount = actions.filter((action) => action.status === "SENT").length;
+      const skippedCount = actions.filter(
+        (action) => action.status === "SKIPPED",
+      ).length;
+
+      if (sentCount > 0) {
+        setMessage(
+          `RioReply sent ${sentCount} email${sentCount === 1 ? "" : "s"}${skippedCount > 0 ? ` and skipped ${skippedCount}` : ""}.`,
+        );
+      } else if (skippedCount > 0) {
+        const latestSkip = actions.find((action) => action.status === "SKIPPED");
+        setMessage(
+          latestSkip?.explanation ??
+            `RioReply skipped ${skippedCount} opportunities. Check Recent RioReply actions.`,
+        );
+      } else {
+        setMessage("RioReply found no product interest opportunities to evaluate.");
+      }
     } catch (error) {
       console.error("Failed to run RioReply marketing:", error);
-      setMessage("RioReply marketing run failed.");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "RioReply marketing run failed.",
+      );
     }
   };
 
@@ -168,15 +203,18 @@ export default function ShopifySettingsPage() {
     try {
       const result = await seedDemoData.mutateAsync({
         recipientEmail: demoEmail || undefined,
+        fromEmail: fromEmail || undefined,
+        enableAutopilot: true,
       });
       await Promise.all([
         apiUtils.shopify.getStore.invalidate(),
         apiUtils.shopify.getStorefrontEventStats.invalidate(),
         apiUtils.shopify.getRecentStorefrontEvents.invalidate(),
         apiUtils.shopify.getRioReplyActions.invalidate(),
+        apiUtils.shopify.getMarketingSettings.invalidate(),
       ]);
       setMessage(
-        `Fresh demo shopper ready (${result.visitorId}): ${result.productViewsCreated} product views on "${result.productTitle}". Enable autopilot and click Run now.`,
+        `Demo ready (${result.visitorId}): ${result.productViewsCreated} views on "${result.productTitle}". Autopilot enabled. Click Run now to send to ${result.recipientEmail}.`,
       );
     } catch (error) {
       console.error("Failed to seed demo data:", error);

@@ -26,6 +26,8 @@ export function createDemoSessionId() {
 export type SeedDemoDataInput = {
   storeId: string;
   recipientEmail: string;
+  fromEmail?: string | null;
+  enableAutopilot?: boolean;
 };
 
 export type SeedDemoDataResult = {
@@ -202,6 +204,30 @@ export class ShopifyDemoDataService {
         syncError: null,
       },
     });
+
+    const existingSettings = await db.shopifyMarketingSettings.findUnique({
+      where: { storeId: store.id },
+    });
+    const shouldEnableAutopilot = input.enableAutopilot ?? true;
+    const fromEmail =
+      input.fromEmail?.trim().toLowerCase() ??
+      existingSettings?.fromEmail ??
+      null;
+
+    if (shouldEnableAutopilot || fromEmail) {
+      await db.shopifyMarketingSettings.upsert({
+        where: { storeId: store.id },
+        create: {
+          storeId: store.id,
+          enabled: shouldEnableAutopilot,
+          fromEmail,
+        },
+        update: {
+          ...(shouldEnableAutopilot ? { enabled: true } : {}),
+          ...(fromEmail ? { fromEmail } : {}),
+        },
+      });
+    }
 
     return {
       recipientEmail: input.recipientEmail.toLowerCase(),

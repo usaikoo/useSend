@@ -127,6 +127,24 @@ export const shopifyRouter = createTRPCRouter({
       });
     }
 
+    const settings = await ShopifyMarketingEngine.getOrCreateSettings(store.id);
+
+    if (!settings.enabled) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message:
+          "RioReply autopilot is disabled. Click Enabled, save settings, then run again.",
+      });
+    }
+
+    if (!settings.fromEmail) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message:
+          "No sender email configured. Set a verified sender email and save settings.",
+      });
+    }
+
     return ShopifyMarketingEngine.evaluateStore(store.id);
   }),
 
@@ -134,6 +152,8 @@ export const shopifyRouter = createTRPCRouter({
     .input(
       z.object({
         recipientEmail: z.string().email().optional(),
+        fromEmail: z.string().email().optional(),
+        enableAutopilot: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -160,6 +180,8 @@ export const shopifyRouter = createTRPCRouter({
       return ShopifyDemoDataService.seedForStore({
         storeId: store.id,
         recipientEmail,
+        fromEmail: input.fromEmail,
+        enableAutopilot: input.enableAutopilot,
       });
     }),
 });
