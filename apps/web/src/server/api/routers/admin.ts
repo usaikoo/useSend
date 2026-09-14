@@ -12,6 +12,7 @@ import { UseSend } from "usesend-js";
 import { isCloud } from "~/utils/common";
 import { toPlainHtml } from "~/server/utils/email-content";
 import { sesRegionSchema } from "~/lib/zod/ses-setting-schema";
+import { TeamService } from "~/server/service/team-service";
 
 const waitlistUserSelection = {
   id: true,
@@ -397,9 +398,14 @@ export const adminRouter = createTRPCRouter({
 
       const updatedTeam = await db.team.update({
         where: { id: teamId },
-        data,
+        data: {
+          ...data,
+          ...(data.plan === "BASIC" ? { isActive: true } : {}),
+        },
         select: teamAdminSelection,
       });
+
+      await TeamService.invalidateTeamCache(teamId);
 
       return updatedTeam;
     }),
