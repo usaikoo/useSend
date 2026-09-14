@@ -16,7 +16,7 @@ interface OtpEmailProps {
 export function OtpEmail({
   otpCode,
   loginUrl,
-  hostName = "useSend",
+  hostName = "RioReply",
   logoUrl,
 }: OtpEmailProps) {
   return (

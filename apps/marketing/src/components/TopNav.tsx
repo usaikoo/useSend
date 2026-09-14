@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { RioReplyBrand } from "~/components/RioReplyLogo";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@usesend/ui/src/button";
@@ -19,9 +19,8 @@ export function TopNav() {
   return (
     <header className="py-4 border-b border-border sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-sidebar-background/80">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between gap-4 text-sm">
-        <Link href="/" className="flex items-center gap-2 group">
-          <Image src="/logo-squircle.png" alt="useSend" width={24} height={24} />
-          <span className="text-primary font-mono text-[16px] group-hover:opacity-90">useSend</span>
+        <Link href="/" className="group hover:opacity-90">
+          <RioReplyBrand />
         </Link>
 
         {/* Desktop nav */}

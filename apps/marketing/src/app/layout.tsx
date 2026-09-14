@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@usesend/ui";
 import Script from "next/script";
 import { SITE_URL } from "~/lib/site-config";
+import { APP_DESCRIPTION, APP_NAME } from "~/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,21 +19,21 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "useSend – Open source email platform",
-  description: "Pay only for what you send, not for storing contacts",
+  title: `${APP_NAME} – ${APP_DESCRIPTION}`,
+  description: APP_DESCRIPTION,
   icons: [{ rel: "icon", url: "/favicon.ico" }],
   metadataBase: new URL(SITE_URL),
   openGraph: {
-    title: "useSend – Open source email platform",
-    description: "Pay only for what you send, not for storing contacts",
+    title: `${APP_NAME} – ${APP_DESCRIPTION}`,
+    description: APP_DESCRIPTION,
     url: SITE_URL,
-    siteName: "useSend",
+    siteName: APP_NAME,
     images: [
       {
-        url: "https://uploads.usesend.com/logos/og.png",
+        url: `${SITE_URL}/logo_light.PNG`,
         width: 1200,
-        height: 630,
-        alt: "useSend – Open source email platform",
+        height: 1200,
+        alt: `${APP_NAME} – ${APP_DESCRIPTION}`,
         type: "image/png",
       },
     ],
@@ -41,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "useSend – Open source email platform",
-    description: "Pay only for what you send, not for storing contacts",
-    images: ["https://uploads.usesend.com/logos/og.png"],
+    title: `${APP_NAME} – ${APP_DESCRIPTION}`,
+    description: APP_DESCRIPTION,
+    images: [`${SITE_URL}/logo_light.PNG`],
   },
   robots: {
     index: true,

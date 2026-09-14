@@ -7,6 +7,7 @@ import { Toaster } from "@usesend/ui/src/toaster";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { Metadata } from "next";
+import { APP_DESCRIPTION, APP_NAME } from "~/lib/brand";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,8 +20,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "useSend",
-  description: "Open source email platform",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

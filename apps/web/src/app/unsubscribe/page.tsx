@@ -168,12 +168,12 @@ export default async function UnsubscribePage({
         <p>
           Powered by{" "}
           <a
-            href="https://usesend.com"
+            href="https://rioreply.app"
             className="font-bold"
             target="_blank"
             rel="noreferrer"
           >
-            useSend
+            RioReply
           </a>
         </p>
       </div>

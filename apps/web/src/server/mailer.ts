@@ -6,6 +6,7 @@ import { getDomains } from "./service/domain-service";
 import { sendEmail } from "./service/email-service";
 import { logger } from "./logger/log";
 import { renderOtpEmail, renderTeamInviteEmail } from "./email-templates";
+import { APP_NAME } from "~/lib/brand";
 
 let usesend: UseSend | undefined;
 
@@ -21,24 +22,22 @@ export async function sendSignUpEmail(
   token: string,
   url: string
 ) {
-  const { host } = new URL(url);
-
   if (env.NODE_ENV === "development") {
     logger.info({ email, url, token }, "Sending sign in email");
     return;
   }
 
-  const subject = "Sign in to useSend";
+  const subject = `Sign in to ${APP_NAME}`;
 
   // Use jsx-email template for beautiful HTML
   const html = await renderOtpEmail({
     otpCode: token.toUpperCase(),
     loginUrl: url,
-    hostName: host,
+    hostName: APP_NAME,
   });
 
   // Fallback text version
-  const text = `Hey,\n\nYou can sign in to useSend by clicking the below URL:\n${url}\n\nYou can also use this OTP: ${token}\n\nThanks,\nuseSend Team`;
+  const text = `Hey,\n\nYou can sign in to ${APP_NAME} by clicking the below URL:\n${url}\n\nYou can also use this OTP: ${token}\n\nThanks,\n${APP_NAME} Team`;
 
   await sendMail(email, subject, text, html);
 }
@@ -55,7 +54,7 @@ export async function sendTeamInviteEmail(
     return;
   }
 
-  const subject = "You have been invited to join useSend";
+  const subject = `You have been invited to join ${APP_NAME}`;
 
   // Use jsx-email template for beautiful HTML
   const html = await renderTeamInviteEmail({
@@ -64,7 +63,7 @@ export async function sendTeamInviteEmail(
   });
 
   // Fallback text version
-  const text = `Hey,\n\nYou have been invited to join the team ${teamName} on useSend.\n\nYou can accept the invitation by clicking the below URL:\n${url}\n\nThanks,\nuseSend Team`;
+  const text = `Hey,\n\nYou have been invited to join the team ${teamName} on ${APP_NAME}.\n\nYou can accept the invitation by clicking the below URL:\n${url}\n\nThanks,\n${APP_NAME} Team`;
 
   await sendMail(email, subject, text, html);
 }

@@ -52,6 +52,7 @@ import {
   DropdownMenuTrigger,
 } from "@usesend/ui/src/dropdown-menu";
 import { FeedbackDialog } from "./FeedbackDialog";
+import { RioReplyBrand } from "./RioReplyLogo";
 import { env } from "~/env";
 
 // General items
@@ -135,9 +136,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarGroupLabel>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold text-foreground font-mono">
-              useSend
-            </span>
+            <RioReplyBrand size={24} nameClassName="text-base" />
             <Badge variant="outline">Beta</Badge>
           </div>
         </SidebarGroupLabel>

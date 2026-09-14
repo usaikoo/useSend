@@ -7,8 +7,8 @@ interface EmailFooterProps {
 }
 
 export function EmailFooter({
-  companyName = "useSend",
-  supportUrl = "mailto:hey@usesend.com",
+  companyName = "RioReply",
+  supportUrl = "mailto:privacy@rioreply.app",
 }: EmailFooterProps) {
   return (
     <Container

@@ -1,5 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
+import { RioReplyBrand } from "~/components/RioReplyLogo";
+import { APP_NAME } from "~/lib/brand";
 // Replaced StatusBadge with external status badge image
 import { APP_SIGNUP_URL } from "~/lib/site-config";
 
@@ -11,14 +12,8 @@ export function SiteFooter() {
     <footer className="py-10 border-t border-border">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-          <div className="flex items-center gap-2 sm:w-56">
-            <Image
-              src="/logo-squircle.png"
-              alt="useSend"
-              width={24}
-              height={24}
-            />
-            <span className="text-primary font-mono">useSend</span>
+          <div className="sm:w-56">
+            <RioReplyBrand />
           </div>
 
           <div className="sm:ml-auto flex items-start gap-4">
@@ -156,7 +151,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-6 text-xs text-muted-foreground mx-auto text-center">
-          © {new Date().getFullYear()} useSend. All rights reserved.
+          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
         </div>
       </div>
     </footer>
