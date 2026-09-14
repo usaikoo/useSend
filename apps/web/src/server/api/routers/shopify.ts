@@ -8,6 +8,7 @@ import { ShopifyService } from "~/server/service/shopify-service";
 import { ShopifySyncService } from "~/server/service/shopify-sync-service";
 import { ShopifyTrackingService } from "~/server/service/shopify-tracking-service";
 import { ShopifyMarketingEngine } from "~/server/service/shopify-marketing-engine";
+import { ShopifyDemoDataService } from "~/server/service/shopify-demo-data-service";
 import { OpenAiEmailService } from "~/server/service/openai-email-service";
 import { db } from "~/server/db";
 import { TRPCError } from "@trpc/server";
@@ -128,4 +129,37 @@ export const shopifyRouter = createTRPCRouter({
 
     return ShopifyMarketingEngine.evaluateStore(store.id);
   }),
+
+  seedDemoData: teamAdminProcedure
+    .input(
+      z.object({
+        recipientEmail: z.string().email().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const store = await db.shopifyStore.findFirst({
+        where: { teamId: ctx.team.id, status: "ACTIVE" },
+      });
+
+      if (!store) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No connected Shopify store found",
+        });
+      }
+
+      const recipientEmail = input.recipientEmail ?? store.shopEmail;
+
+      if (!recipientEmail) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Enter a recipient email for demo data.",
+        });
+      }
+
+      return ShopifyDemoDataService.seedForStore({
+        storeId: store.id,
+        recipientEmail,
+      });
+    }),
 });

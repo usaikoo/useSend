@@ -55,14 +55,22 @@ export default function ShopifySettingsPage() {
   });
   const updateMarketingSettings = api.shopify.updateMarketingSettings.useMutation();
   const runMarketingNow = api.shopify.runMarketingNow.useMutation();
+  const seedDemoData = api.shopify.seedDemoData.useMutation();
   const [copiedSnippet, setCopiedSnippet] = useState(false);
   const [fromEmail, setFromEmail] = useState("");
+  const [demoEmail, setDemoEmail] = useState("");
 
   useEffect(() => {
     if (marketingSettings?.fromEmail) {
       setFromEmail(marketingSettings.fromEmail);
     }
   }, [marketingSettings?.fromEmail]);
+
+  useEffect(() => {
+    if (store?.shopEmail && !demoEmail) {
+      setDemoEmail(store.shopEmail);
+    }
+  }, [store?.shopEmail, demoEmail]);
 
   useEffect(() => {
     const connected = searchParams.get("connected");
@@ -154,6 +162,28 @@ export default function ShopifySettingsPage() {
     }
   };
 
+  const onSeedDemoData = async () => {
+    setMessage(null);
+
+    try {
+      const result = await seedDemoData.mutateAsync({
+        recipientEmail: demoEmail || undefined,
+      });
+      await Promise.all([
+        apiUtils.shopify.getStore.invalidate(),
+        apiUtils.shopify.getStorefrontEventStats.invalidate(),
+        apiUtils.shopify.getRecentStorefrontEvents.invalidate(),
+        apiUtils.shopify.getRioReplyActions.invalidate(),
+      ]);
+      setMessage(
+        `Demo data ready for ${result.recipientEmail}: ${result.productViewsCreated} product views on "${result.productTitle}". Enable autopilot and click Run now to send a test email.`,
+      );
+    } catch (error) {
+      console.error("Failed to seed demo data:", error);
+      setMessage("Could not generate demo data. Sync products first, then try again.");
+    }
+  };
+
   const onSyncNow = async () => {
     setMessage(null);
 
@@ -185,6 +215,9 @@ export default function ShopifySettingsPage() {
   }
 
   const isSyncing = store?.syncStatus === "SYNCING";
+  const hasDemoData =
+    (store?.customerCount ?? 0) > 0 || (store?.orderCount ?? 0) > 0;
+  const showCustomerDataPending = customerDataPending && !hasDemoData;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -195,7 +228,7 @@ export default function ShopifySettingsPage() {
           customers, and orders to run AI marketing automatically.
         </p>
 
-        {customerDataPending ? (
+        {showCustomerDataPending ? (
           <div className="text-sm mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 space-y-2">
             <p>
               Customer and order sync is paused until Shopify approves protected
@@ -213,6 +246,11 @@ export default function ShopifySettingsPage() {
                 rioreply.app/privacy
               </a>
             </p>
+          </div>
+        ) : hasDemoData && customerDataPending ? (
+          <div className="text-sm mt-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-blue-900">
+            Demo customer and order data is loaded for App Store preview. Live
+            Shopify sync will start after protected customer data approval.
           </div>
         ) : null}
 
@@ -251,13 +289,13 @@ export default function ShopifySettingsPage() {
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-muted-foreground">Customers</span>
                 <span className="text-sm font-medium">
-                  {customerDataPending ? "Pending approval" : store.customerCount}
+                  {showCustomerDataPending ? "Pending approval" : store.customerCount}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-muted-foreground">Orders</span>
                 <span className="text-sm font-medium">
-                  {customerDataPending ? "Pending approval" : store.orderCount}
+                  {showCustomerDataPending ? "Pending approval" : store.orderCount}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
@@ -266,7 +304,7 @@ export default function ShopifySettingsPage() {
                   {isSyncing ? "Syncing..." : store.syncStatus.toLowerCase()}
                 </span>
               </div>
-              {store.syncError ? (
+              {store.syncError && !hasDemoData ? (
                 <div className="flex justify-between gap-4">
                   <span className="text-sm text-muted-foreground">
                     {customerDataPending ? "Note" : "Last error"}
@@ -340,6 +378,49 @@ export default function ShopifySettingsPage() {
           </div>
         )}
       </Card>
+
+      {store ? (
+        <Card className="rounded-xl p-8 space-y-6">
+          <div>
+            <h2 className="text-base font-semibold">Demo data</h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Generate sample customer, order, and product view events to test
+              RioReply autopilot and prepare App Store screenshots without
+              waiting for Shopify customer data approval.
+            </p>
+          </div>
+
+          <div className="rounded-lg border p-4 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="demo-email" className="text-sm font-medium block">
+                Demo recipient email
+              </label>
+              <Input
+                id="demo-email"
+                type="email"
+                placeholder="you@example.com"
+                value={demoEmail}
+                onChange={(event) => setDemoEmail(event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                RioReply will use this address for the demo shopper profile and
+                test emails.
+              </p>
+            </div>
+
+            <Button
+              onClick={onSeedDemoData}
+              disabled={!demoEmail || seedDemoData.isPending || isSyncing}
+            >
+              {seedDemoData.isPending ? (
+                <Spinner className="w-4 h-4" />
+              ) : (
+                "Generate demo data"
+              )}
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       {store && trackingSetup ? (
         <Card className="rounded-xl p-8 space-y-6">
