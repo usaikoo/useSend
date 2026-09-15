@@ -25,7 +25,6 @@ export default function ApiKeysPage({
             Billing
           </SettingsNavButton>
         ) : null}
-        <SettingsNavButton href="/settings/shopify">Shopify</SettingsNavButton>
         <SettingsNavButton href="/settings/team">Team</SettingsNavButton>
       </div>
       <div className="mt-8">{children}</div>

@@ -14,7 +14,7 @@ export default async function ShopifyInstallPage({
   const { shop } = await searchParams;
 
   if (!shop) {
-    redirect("/settings/shopify");
+    redirect("/integrations/shopify");
   }
 
   const shopDomain = normalizeShopDomain(shop);
@@ -29,7 +29,7 @@ export default async function ShopifyInstallPage({
   }
 
   if (!ShopifyService.isConfigured()) {
-    redirect("/settings/shopify?error=not_configured");
+    redirect("/integrations/shopify?error=not_configured");
   }
 
   const teamUser = await db.teamUser.findFirst({

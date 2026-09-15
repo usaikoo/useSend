@@ -11,7 +11,7 @@ export function ShopifyInstallLanding({
   loginUrl?: string;
   connectUrl?: string;
 }) {
-  const href = loginUrl ?? connectUrl ?? "/settings/shopify";
+  const href = loginUrl ?? connectUrl ?? "/integrations/shopify";
   const label = loginUrl ? "Sign in to RioReply" : "Connect store in RioReply";
 
   return (

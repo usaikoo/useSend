@@ -18,6 +18,7 @@ import {
   GaugeIcon,
   UserRoundX,
   Webhook,
+  Plug2,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -90,6 +91,11 @@ const marketingItems = [
     title: "Campaigns",
     url: "/campaigns",
     icon: Volume2,
+  },
+  {
+    title: "Integrations",
+    url: "/integrations",
+    icon: Plug2,
   },
 ];
 

@@ -9,7 +9,7 @@ import {
 
 function getSettingsUrl(params?: Record<string, string>) {
   const baseUrl = (env.SHOPIFY_APP_URL ?? env.NEXTAUTH_URL).replace(/\/$/, "");
-  const url = new URL("/settings/shopify", baseUrl);
+  const url = new URL("/integrations/shopify", baseUrl);
 
   if (params) {
     for (const [key, value] of Object.entries(params)) {

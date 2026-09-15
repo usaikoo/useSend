@@ -4,10 +4,10 @@
 #   shopify app deploy
 
 name = "RioReply - AI Marketing Agent"
-client_id = "YOUR_SHOPIFY_API_KEY"
+client_id = "8ef9a3fdf5f50457e29279b5d8d1c1bc"
 handle = "rioreply"
 application_url = "https://app.rioreply.app/shopify/install"
-embedded = true
+embedded = false
 
 [access_scopes]
 scopes = "read_products,read_customers,read_orders,read_content"
